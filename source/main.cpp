@@ -1,7 +1,7 @@
 #include <iostream>
 #include <stdlib.h>
-#include <getopt.h>
 #include <omp.h>
+#include <getopt.h>
 
 int param_nx = 100;
 int param_ny = 100;
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
     }
 
     printf(
-        "Altered params: "
+        "Updated params: "
         "  int param_nx = %d\n"
         "  int param_ny = %d\n"
         "  int param_nz = %d\n"
