@@ -1,5 +1,11 @@
-#pragma once
+#ifndef SPECOPS_H
+#define SPECOPS_H
 #include <vector>
 
-std::vector<double> linear_combination(std::vector<double> &x, double a, 
-    std::vector<double> &y, double b);
+namespace so {
+
+    std::vector<double> axpby(std::vector<double> &x, double a, 
+        std::vector<double> &y, double b);
+}
+
+#endif

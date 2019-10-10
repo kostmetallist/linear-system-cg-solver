@@ -1,7 +1,9 @@
-#include <iostream>
-#include <stdlib.h>
 #include <omp.h>
 #include <getopt.h>
+#include <iostream>
+#include <vector>
+#include <stdlib.h>
+#include "specops.h"
 
 int param_nx = 100;
 int param_ny = 100;
@@ -117,6 +119,9 @@ int main(int argc, char *argv[]) {
 
     std::cout << "  string param_input_filename = " <<
         param_input_filename << std::endl;
+
+    std::vector<double> v1(10), v2(10);
+    std::vector<double> vec = so::axpby(v1, 0, v2, 0);
 
     return 0;
 }
