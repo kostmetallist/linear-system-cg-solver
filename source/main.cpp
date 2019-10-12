@@ -120,8 +120,8 @@ int main(int argc, char *argv[]) {
     std::cout << "  string param_input_filename = " <<
         param_input_filename << std::endl;
 
-    std::vector<double> v1(10), v2(10);
-    std::vector<double> vec = so::axpby(v1, 0, v2, 0);
+    std::vector<double> v1(3, 2.0), v2(3, 3.0);
+    std::vector<double> vec = so::axpby(v1, 2.5, v2, 2);
 
     return 0;
 }
