@@ -1,5 +1,5 @@
-#ifndef SPECOPS_H
-#define SPECOPS_H
+#ifndef SPECIALOPS_H
+#define SPECIALOPS_H
 #include <vector>
 
 namespace so {

@@ -1,4 +1,4 @@
-#include "specops.h"
+#include "specialops.h"
 #include <vector>
 
 namespace so {
