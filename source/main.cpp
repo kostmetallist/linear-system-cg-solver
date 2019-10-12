@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <stdlib.h>
+#include <stdio.h>
 
 int param_nx = 100;
 int param_ny = 100;

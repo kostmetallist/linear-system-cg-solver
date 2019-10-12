@@ -5,8 +5,8 @@
 
 namespace so {
 
-    std::vector<double> axpby(std::vector<double> &x, double a, 
-        std::vector<double> &y, double b) {
+    std::vector<double> axpby(std::vector<double> &x, const double a, 
+        std::vector<double> &y, const double b) {
 
         if (x.size() != y.size()) {
             std::cerr << "so::axpby: different vector sizes" << std::endl;
@@ -37,12 +37,12 @@ namespace so {
         return dot_result;
     }
 
-    ellpack_matrix plain2ellpack(plain_matrix &matrix, 
-        std::size_t max_nonzero) {
+    ellpack_matrix plain2ellpack(const plain_matrix &matrix, 
+        const std::size_t max_nonzero) {
 
         std::size_t rows_number = matrix.rows.size();
-        std::vector<std::vector<int>> idxs(rows_number);
-        std::vector<std::vector<double>> data(rows_number);
+        std::vector< std::vector<int> > idxs(rows_number);
+        std::vector< std::vector<double> > data(rows_number);
 
         for (std::size_t i = 0; i < rows_number; ++i) {
 
@@ -87,6 +87,36 @@ namespace so {
         ellpack_matrix result;
         result.idxs = idxs;
         result.data = data;
+        return result;
+    }
+
+    plain_matrix ellpack2plain(const ellpack_matrix &matrix, 
+        const std::size_t resulting_column_num) {
+
+        std::size_t row_number = matrix.idxs.size();
+        std::size_t col_number = resulting_column_num;
+        std::vector< std::vector<double> > rows(row_number);
+        for (std::size_t i = 0; i < row_number; ++i) {
+
+            std::vector<double> row(col_number);
+            const std::vector<int> ell_idxs = matrix.idxs[i];
+            const std::vector<double> ell_data = matrix.data[i];
+            // index for ellpack structure elements referencing
+            std::size_t k = 0;
+            for (std::size_t j = 0; j < col_number; ++j) {
+
+                if (k < ell_idxs.size() && j == ell_idxs[k]) {
+                    row[j] = ell_data[k++];
+                } else {
+                    row[j] = 0;
+                }
+            }
+
+            rows[i] = row;
+        }
+
+        plain_matrix result;
+        result.rows = rows;
         return result;
     }
 }
