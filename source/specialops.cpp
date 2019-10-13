@@ -139,30 +139,79 @@ namespace so {
 
         std::string input;
         if (!std::getline(in, input)) {
-            std::cerr << "so::read_ellpack_matrix: first string"
-                " should be valid integer representing row number" << std::endl;
+            std::cerr << "so::read_ellpack_matrix: first string should be"
+                " valid integer representing row number" << std::endl;
             return empty_matrix;
         }
 
-        std::size_t rows_number;
-        std::istringstream(input) >> rows_number;
+        int rows_input;
+        std::istringstream(input) >> rows_input;
         if (!std::getline(in, input)) {
-            std::cerr << "so::read_ellpack_matrix: second string"
-                " should be valid integer representing column number" << 
-                std::endl;
+            std::cerr << "so::read_ellpack_matrix: second string should be"
+                " valid integer representing column number" << std::endl;
             return empty_matrix;
         }
 
-        std::size_t cols_number;
-        std::istringstream(input) >> cols_number;
+        int cols_input;
+        std::istringstream(input) >> cols_input;
+        if (rows_input <= 0 || cols_input <= 0) {
+            std::cerr << "so::read_ellpack_matrix: row and column numbers"
+                " must be positive integers" << std::endl;
+            return empty_matrix;
+        }
+
+        const std::size_t rows_number = static_cast<std::size_t>(rows_input);
+        const std::size_t cols_number = static_cast<std::size_t>(cols_input);
+        std::vector< std::vector<int> > idxs(rows_number, 
+            std::vector<int>(cols_number));
+        std::vector< std::vector<double> > data(rows_number, 
+            std::vector<double>(cols_number));
+        int line_counter = 0;
+        const int lines_by_chunk = rows_number * cols_number;
+        bool is_data_chunk = false;
         while (std::getline(in, input)) {
 
-            // TODO idxs and data values parsing and storing
+            if (is_data_chunk) {
+
+                double elem;
+                std::istringstream(input) >> elem;
+                data[line_counter/cols_number][line_counter%cols_number] = elem;
+
+            } else {
+
+                int idx;
+                std::istringstream(input) >> idx;
+                if (idx < 0) {
+                    std::cerr << "so::read_ellpack_matrix: found negative"
+                        " ellpack index which is illegal" << std::endl;
+                    return empty_matrix;
+                }
+
+                idxs[line_counter/cols_number][line_counter%cols_number] = idx;
+                if (line_counter == lines_by_chunk - 1) {
+                    is_data_chunk = true;
+                    // line_counter will be increased by 1 after exiting to 
+                    // external conditional branch. Hence, when execution reach
+                    // `if (is_data_chunk)` block, line_counter will be zeroed.
+                    line_counter = -1;
+                }
+            }
+
+            line_counter++;
+        }
+
+        // checking that both ellpack parts were processed AND 
+        // data section was read completely
+        if (!is_data_chunk && line_counter < lines_by_chunk) {
+            std::cerr << "so::read_ellpack_matrix: input file contains" 
+                " insufficient amount of data (expected " << 
+                2*lines_by_chunk+2 << " lines in file)" << std::endl;
+            return empty_matrix;
         }
 
         ellpack_matrix result;
-        result.idxs = std::vector< std::vector<int> >();
-        result.data = std::vector< std::vector<double> >();
+        result.idxs = idxs;
+        result.data = data;
         return result;
     }
 }

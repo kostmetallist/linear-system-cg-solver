@@ -1,6 +1,6 @@
 ## **Linear system conjugate gradient solver**
 
-![](img/sparse-matrix.png)
+<img src="img/sparse-matrix.png" alt="<icon here>" width="256"/>
 
 Imlementation of linear system solver using Jacobi preconditioner. Using OpenMP for parrallelizing.
 
@@ -11,6 +11,10 @@ First you must ensure you have OpenMP library installed in your system. For exam
 For IBM BlueGene/P: `make bgp`;
 for IBM Polus: `make polus`;
 for computer with g++ compiler: `make gnu`.
+
+The `Makefile` also supports C++ standard switching for GNU compilation, which is possible via changing `GNU_STANDARD` variable while starting `make` command. For instance, the C++98 standard option selecting will have the following form (note the lowercase 'c' in the name):
+
+`make gnu GNU_STANDARD=c++98`
 
 #### Running
 
