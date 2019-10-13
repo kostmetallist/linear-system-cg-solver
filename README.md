@@ -1,6 +1,8 @@
 ## **Linear system conjugate gradient solver**
 
-<img src="img/sparse-matrix.png" alt="<icon here>" width="256" class="center"/>
+<p align="center">
+  <img src="img/sparse-matrix.png" alt="<icon here>" width="256"/>
+</p>
 
 Imlementation of linear system solver using Jacobi preconditioner. Using OpenMP for parrallelizing.
 
