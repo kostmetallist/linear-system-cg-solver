@@ -1,6 +1,7 @@
 #ifndef SPECIALOPS_H
 #define SPECIALOPS_H
 #include <vector>
+#include <string>
 
 #define EPS 1E-6
 
@@ -22,6 +23,8 @@ namespace so {
     ellpack_matrix plain2ellpack(const plain_matrix &matrix, const std::size_t max_nonzero);
     plain_matrix ellpack2plain(const ellpack_matrix &matrix, 
         const std::size_t resulting_column_num);
+
+    ellpack_matrix read_ellpack_matrix(const std::string path);
 }
 
 #endif

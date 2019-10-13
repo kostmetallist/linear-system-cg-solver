@@ -1,6 +1,9 @@
 #include "specialops.h"
 #include <vector>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 #include <cmath>
 
 namespace so {
@@ -117,6 +120,49 @@ namespace so {
 
         plain_matrix result;
         result.rows = rows;
+        return result;
+    }
+
+    ellpack_matrix read_ellpack_matrix(const std::string path) {
+
+        ellpack_matrix empty_matrix = { 
+            std::vector< std::vector<int> >(), 
+            std::vector< std::vector<double> >()
+        };
+
+        std::ifstream in(path.c_str());
+        if (!in) {
+            std::cerr << "so::read_ellpack_matrix: an issue"
+                " occurred while creating ifstream" << std::endl;
+            return empty_matrix;
+        }
+
+        std::string input;
+        if (!std::getline(in, input)) {
+            std::cerr << "so::read_ellpack_matrix: first string"
+                " should be valid integer representing row number" << std::endl;
+            return empty_matrix;
+        }
+
+        std::size_t rows_number;
+        std::istringstream(input) >> rows_number;
+        if (!std::getline(in, input)) {
+            std::cerr << "so::read_ellpack_matrix: second string"
+                " should be valid integer representing column number" << 
+                std::endl;
+            return empty_matrix;
+        }
+
+        std::size_t cols_number;
+        std::istringstream(input) >> cols_number;
+        while (std::getline(in, input)) {
+
+            // TODO idxs and data values parsing and storing
+        }
+
+        ellpack_matrix result;
+        result.idxs = std::vector< std::vector<int> >();
+        result.data = std::vector< std::vector<double> >();
         return result;
     }
 }
