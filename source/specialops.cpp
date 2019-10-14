@@ -214,4 +214,82 @@ namespace so {
         result.data = data;
         return result;
     }
+
+    ellpack_matrix generate_diag_dominant_matrix(const int nx, 
+        const int ny, const int nz) {
+
+        if (nx <= 0 || ny <= 0 || nz <= 0) {
+            std::cerr << "so::generate_diag_dominant_matrix: input parameters" 
+                " must be positive integers" << std::endl;
+            return {
+                std::vector< std::vector<int> >(),
+                std::vector< std::vector<double> >()
+            };
+        }
+
+        // Three-dimensional regular mesh topology implies that 
+        // every node can have at most 6 neighbours. Links with another
+        // nodes are mapped onto matrix elements. Thus, every row may 
+        // have max 7 non-zero elements, including diagonal one.
+        const int max_nonzero = 7;
+        const int total_mesh_nodes = nx * ny * nz;
+        std::vector< std::vector<int> > idxs(total_mesh_nodes, 
+            std::vector<int>(max_nonzero));
+        std::vector< std::vector<double> > data(total_mesh_nodes, 
+            std::vector<double>(max_nonzero));
+        for (int i = 0; i < total_mesh_nodes; ++i) {
+
+            int filled_indices = 0, 
+                last_inserted = 0;
+            if (i/(nx*ny) > 0) {
+                last_inserted = i-nx*ny;
+                idxs[i][filled_indices++] = last_inserted;
+            }
+
+            if (i%(nx*ny) > nx-1) {
+                last_inserted = i-nx;
+                idxs[i][filled_indices++] = last_inserted;
+            }
+
+            if (i%nx > 0) {
+                last_inserted = i-1;
+                idxs[i][filled_indices++] = last_inserted;
+            }
+
+            last_inserted = i;
+            idxs[i][filled_indices++] = last_inserted;
+
+            if (i%nx < nx-1) {
+                last_inserted = i+1;
+                idxs[i][filled_indices++] = last_inserted;
+            }
+
+            if (i%(nx*ny) < nx*(ny-1)) {
+                last_inserted = i+nx;
+                idxs[i][filled_indices++] = last_inserted;
+            }
+
+            if (i/(nx*ny) < nz-1) {
+                last_inserted = i+nx*ny;
+                idxs[i][filled_indices++] = last_inserted;
+            }
+
+            // in case neighbours number is less than max allowed, 
+            // make a padding for indices vector
+            if (filled_indices < max_nonzero) {
+                for (int j = 0; j < max_nonzero-filled_indices; ++j) {
+                    idxs[i][filled_indices+j] = last_inserted;
+                }
+            }
+
+            for (int j = 0; j < idxs[i].size(); ++j) {
+                data[i][j] = 1;
+            }
+        }
+
+        ellpack_matrix result;
+        result.idxs = idxs;
+        result.data = data;
+        return result;
+    }
 }

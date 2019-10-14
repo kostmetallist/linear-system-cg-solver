@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int param_nx = 100;
-int param_ny = 100;
-int param_nz = 100;
+int param_nx = 10;
+int param_ny = 10;
+int param_nz = 10;
 // residual parameter
 double param_tol = 9.8E-9;
 // maximum iterations number
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     }
 
     printf(
-        "Updated params: "
+        "Updated params: \n"
         "  int param_nx = %d\n"
         "  int param_ny = %d\n"
         "  int param_nz = %d\n"
@@ -122,10 +122,18 @@ int main(int argc, char *argv[]) {
     std::cout << "  string param_input_filename = " <<
         param_input_filename << std::endl;
 
-    // std::vector<double> v1(3, 2.0), v2(3, 3.0);
-    // std::vector<double> vec = so::axpby(v1, 2.5, v2, 2);
+    // ellpack_matrix em = so::read_ellpack_matrix(param_input_filename);
+    // plain_matrix pm = so::ellpack2plain(em, 4);
 
-    
+    ellpack_matrix em = so::generate_diag_dominant_matrix(param_nx, 
+        param_ny, param_nz);
+    plain_matrix pm = so::ellpack2plain(em, param_nx*param_ny*param_nz);
+    for (int i = 0; i < pm.rows.size(); ++i) {
+        for (int j = 0; j < pm.rows[i].size(); ++j) {
+            std::cout << pm.rows[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
 
     return 0;
 }

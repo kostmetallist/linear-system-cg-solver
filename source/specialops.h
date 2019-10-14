@@ -25,6 +25,8 @@ namespace so {
         const std::size_t resulting_column_num);
 
     ellpack_matrix read_ellpack_matrix(const std::string path);
+    ellpack_matrix generate_diag_dominant_matrix(const int nx, const int ny, 
+        const int nz);
 }
 
 #endif
