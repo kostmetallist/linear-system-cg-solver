@@ -49,12 +49,9 @@ namespace so {
 
         for (std::size_t i = 0; i < rows_number; ++i) {
 
-            idxs[i] = std::vector<int>(max_nonzero);
-            data[i] = std::vector<double>(max_nonzero);
-
-            std::vector<double> origin_row = matrix.rows[i];
-            std::vector<int> idxs_row = idxs[i];
-            std::vector<double> data_row = data[i];
+            std::vector<int> idxs_row(max_nonzero);
+            std::vector<double> data_row(max_nonzero);
+            const std::vector<double> &origin_row = matrix.rows[i];
             // index for iterating over idxs and data
             std::size_t k = 0;
             for (std::size_t j = 0; 
@@ -85,6 +82,9 @@ namespace so {
                     k++;
                 }
             }
+
+            idxs[i] = idxs_row;
+            data[i] = data_row;
         }
 
         ellpack_matrix result;
@@ -102,8 +102,8 @@ namespace so {
         for (std::size_t i = 0; i < row_number; ++i) {
 
             std::vector<double> row(col_number);
-            const std::vector<int> ell_idxs = matrix.idxs[i];
-            const std::vector<double> ell_data = matrix.data[i];
+            const std::vector<int> &ell_idxs = matrix.idxs[i];
+            const std::vector<double> &ell_data = matrix.data[i];
             // index for ellpack structure elements referencing
             std::size_t k = 0;
             for (std::size_t j = 0; j < col_number; ++j) {
