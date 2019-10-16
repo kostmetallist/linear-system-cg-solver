@@ -221,10 +221,10 @@ namespace so {
         if (nx <= 0 || ny <= 0 || nz <= 0) {
             std::cerr << "so::generate_diag_dominant_matrix: input parameters" 
                 " must be positive integers" << std::endl;
-            return {
-                std::vector< std::vector<int> >(),
-                std::vector< std::vector<double> >()
-            };
+            ellpack_matrix empty_matrix;
+            empty_matrix.idxs = std::vector< std::vector<int> >();
+            empty_matrix.data = std::vector< std::vector<double> >();
+            return empty_matrix;
         }
 
         // Three-dimensional regular mesh topology implies that 
