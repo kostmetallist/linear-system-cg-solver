@@ -20,7 +20,10 @@ namespace so {
     std::vector<double> axpby(std::vector<double> &x, const double a, 
         std::vector<double> &y, const double b);
     double dot(std::vector<double> &x, std::vector<double> &y);
-    ellpack_matrix plain2ellpack(const plain_matrix &matrix, const std::size_t max_nonzero);
+    std::vector<double> spmv(const ellpack_matrix &matrix, 
+        const std::vector<double> &vec);
+    ellpack_matrix plain2ellpack(const plain_matrix &matrix, 
+        const std::size_t max_nonzero);
     plain_matrix ellpack2plain(const ellpack_matrix &matrix, 
         const std::size_t resulting_column_num);
 

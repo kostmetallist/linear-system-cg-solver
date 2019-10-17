@@ -40,6 +40,42 @@ namespace so {
         return dot_result;
     }
 
+    // defines A*x operation, where A represents matrix with N columns and
+    // x is a N-row vector
+    std::vector<double> spmv(const ellpack_matrix &matrix, 
+        const std::vector<double> &vec) {
+
+        if (matrix.idxs.size() < 1) {
+            std::cerr << "so::spmv: cannot process empty matrix" << std::endl;
+            return std::vector<double>();
+        } else if (matrix.idxs[0].size() > vec.size()) {
+            std::cerr << "so::spmv: matrix column number a priori"
+                " exceeds vector size" << std::endl;
+            return std::vector<double>();
+        }
+
+        std::vector<double> result(matrix.idxs.size());
+        for (std::size_t i = 0; i < matrix.idxs.size(); ++i) {
+
+            double result_i = 0;
+            int last_extracted = -1;
+            for (std::size_t j = 0; j < matrix.idxs[i].size(); ++j) {
+
+                int idx_extracted = matrix.idxs[i][j];
+                if (idx_extracted == last_extracted) {
+                    break;
+                } else {
+                    result_i += matrix.data[i][j] * vec[idx_extracted];
+                    last_extracted = idx_extracted;
+                }
+            }
+
+            result[i] = result_i;
+        }
+
+        return result;
+    }
+
     ellpack_matrix plain2ellpack(const plain_matrix &matrix, 
         const std::size_t max_nonzero) {
 
@@ -219,6 +255,7 @@ namespace so {
         const int ny, const int nz) {
 
         if (nx <= 0 || ny <= 0 || nz <= 0) {
+ 
             std::cerr << "so::generate_diag_dominant_matrix: input parameters" 
                 " must be positive integers" << std::endl;
             ellpack_matrix empty_matrix;
@@ -282,6 +319,7 @@ namespace so {
                 }
             }
 
+            // TODO replace 1 with cos function
             for (int j = 0; j < idxs[i].size(); ++j) {
                 data[i][j] = 1;
             }

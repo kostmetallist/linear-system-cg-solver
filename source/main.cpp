@@ -197,5 +197,33 @@ int main(int argc, char *argv[]) {
     //     std::cout << std::endl;
     // }
 
+    ellpack_matrix em = so::read_ellpack_matrix(param_input_filename);
+    plain_matrix pm = so::ellpack2plain(em, 4);
+    std::cout << "input matrix: " << std::endl;
+    for (int i = 0; i < pm.rows.size(); ++i) {
+        for (int j = 0; j < pm.rows[i].size(); ++j) {
+            std::cout << pm.rows[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::vector<double> x(4);
+    x[0] = 1.0;
+    x[1] = 2.0;
+    x[2] = 1.0;
+    x[3] = 1.0;
+    std::cout << "x vector: " << std::endl;
+    for (int i = 0; i < x.size(); ++i) {
+        std::cout << x[i] << " ";
+    }
+    std::cout << std::endl;
+
+    const std::vector<double> &result = so::spmv(em, x);
+    std::cout << "result vector: " << std::endl;
+    for (int i = 0; i < result.size(); ++i) {
+        std::cout << result[i] << " ";
+    }
+    std::cout << std::endl;
+
     exit(0);
 }
