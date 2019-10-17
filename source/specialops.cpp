@@ -96,7 +96,7 @@ namespace so {
 
                 double value = origin_row[j];
                 // checking whether the value is nonzero
-                if (abs(value) > EPS) {
+                if (std::abs(value) > EPS) {
                     idxs_row[k] = j;
                     data_row[k] = value;
                     k++;
@@ -277,7 +277,8 @@ namespace so {
         for (int i = 0; i < total_mesh_nodes; ++i) {
 
             int filled_indices = 0, 
-                last_inserted = 0;
+                last_inserted = 0, 
+                diagonal_idx = 0;
             if (i/(nx*ny) > 0) {
                 last_inserted = i-nx*ny;
                 idxs[i][filled_indices++] = last_inserted;
@@ -294,6 +295,7 @@ namespace so {
             }
 
             last_inserted = i;
+            diagonal_idx = filled_indices;
             idxs[i][filled_indices++] = last_inserted;
 
             if (i%nx < nx-1) {
@@ -319,10 +321,17 @@ namespace so {
                 }
             }
 
-            // TODO replace 1 with cos function
-            for (int j = 0; j < idxs[i].size(); ++j) {
-                data[i][j] = 1;
+            double non_diag_abs_sum = 0;
+            for (int j = 0; j < filled_indices; ++j) {
+
+                if (j == diagonal_idx) { continue; }
+                double generated_value = cos(PI + i*idxs[i][j]);
+                data[i][j] = generated_value;
+                non_diag_abs_sum += std::abs(generated_value);
             }
+
+            // making generated matrix diagonal dominant
+            data[i][diagonal_idx] = 1.5 * non_diag_abs_sum;
         }
 
         ellpack_matrix result;

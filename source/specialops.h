@@ -4,6 +4,7 @@
 #include <string>
 
 #define EPS 1E-6
+#define PI  3.141592
 
 typedef struct {
     std::vector< std::vector<double> > rows;
