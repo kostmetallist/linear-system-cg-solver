@@ -159,6 +159,47 @@ namespace so {
         return result;
     }
 
+    // gets the diagonal elements from the matrix and form a 
+    // new instance of ellpack_matrix with only one non-zero element per row
+    ellpack_matrix derive_diagonal(const ellpack_matrix &matrix) {
+
+        ellpack_matrix empty_matrix;
+        empty_matrix.idxs = std::vector< std::vector<int> >(); 
+        empty_matrix.data = std::vector< std::vector<double> >();
+        if (matrix.idxs.size() < 1) {
+            std::cerr << "so::derive_diagonal:"
+                " cannot process empty matrix" << std::endl;
+            return empty_matrix;
+        }
+
+        const std::size_t n_rows = matrix.idxs.size();
+        std::vector< std::vector<int> > idxs(n_rows, std::vector<int>(1));
+        std::vector< std::vector<double> > data(n_rows, std::vector<double>(1));
+        for (std::size_t i = 0; i < n_rows; ++i) {
+
+            const std::vector<int> &i_idxs = matrix.idxs[i];
+            for (std::size_t j = 0; j < i_idxs.size(); ++j) {
+
+                std::size_t col_idx = i_idxs[j];
+                if (col_idx >= i) {
+
+                    if (col_idx == i)
+                        data[i][0] = matrix.data[i][j];
+                    if (col_idx > i)
+                        data[i][0] = 0;
+                    break;
+                }
+            }
+
+            idxs[i][0] = i;
+        }
+
+        ellpack_matrix result;
+        result.idxs = idxs; 
+        result.data = data;
+        return result;
+    }
+
     ellpack_matrix read_ellpack_matrix(const std::string path) {
 
         ellpack_matrix empty_matrix = { 

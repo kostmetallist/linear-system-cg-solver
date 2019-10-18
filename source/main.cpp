@@ -213,11 +213,21 @@ int main(int argc, char *argv[]) {
     // std::cout << std::endl;
 
     // ellpack_matrix em = so::generate_diag_dominant_matrix(param_nx, param_ny, param_nz);
-    // plain_matrix pm = so::ellpack2plain(em, 7);
-    // std::cout << "generated matrix: " << std::endl;
+    // plain_matrix pm = so::ellpack2plain(em, 25);
+    // std::cout << "generated original matrix: " << std::endl;
     // for (int i = 0; i < pm.rows.size(); ++i) {
     //     for (int j = 0; j < pm.rows[i].size(); ++j) {
     //         printf("% 05.3lf ", pm.rows[i][j]);
+    //     }
+    //     std::cout << std::endl;
+    // }
+
+    // ellpack_matrix diagonal = so::derive_diagonal(em);
+    // plain_matrix plain_diagonal = so::ellpack2plain(diagonal, 25);
+    // std::cout << "derived diagonal matrix: " << std::endl;
+    // for (int i = 0; i < plain_diagonal.rows.size(); ++i) {
+    //     for (int j = 0; j < plain_diagonal.rows[i].size(); ++j) {
+    //         printf("% 05.3lf ", plain_diagonal.rows[i][j]);
     //     }
     //     std::cout << std::endl;
     // }

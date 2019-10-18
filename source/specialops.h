@@ -27,6 +27,7 @@ namespace so {
         const std::size_t max_nonzero);
     plain_matrix ellpack2plain(const ellpack_matrix &matrix, 
         const std::size_t resulting_column_num);
+    ellpack_matrix derive_diagonal(const ellpack_matrix &matrix);
 
     ellpack_matrix read_ellpack_matrix(const std::string path);
     ellpack_matrix generate_diag_dominant_matrix(const int nx, const int ny, 
