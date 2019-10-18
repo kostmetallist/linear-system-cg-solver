@@ -16,6 +16,11 @@ typedef struct
     std::vector< std::vector<double> > data;
 } ellpack_matrix;
 
+std::vector<double> operator+(const std::vector<double> &left, 
+    const std::vector<double> &right);
+std::vector<double> operator-(const std::vector<double> &left, 
+    const std::vector<double> &right);
+
 namespace so {
 
     std::vector<double> axpby(std::vector<double> &x, const double a, 
@@ -28,6 +33,9 @@ namespace so {
     plain_matrix ellpack2plain(const ellpack_matrix &matrix, 
         const std::size_t resulting_column_num);
     ellpack_matrix derive_diagonal(const ellpack_matrix &matrix);
+    std::vector<double> cg_solve(const ellpack_matrix &matrix, 
+        const std::vector<double> &right_side, const double tolerance, 
+        const int max_iterations);
 
     ellpack_matrix read_ellpack_matrix(const std::string path);
     ellpack_matrix generate_diag_dominant_matrix(const int nx, const int ny, 

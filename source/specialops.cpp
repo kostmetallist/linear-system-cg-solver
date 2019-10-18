@@ -6,6 +6,38 @@
 #include <string>
 #include <cmath>
 
+std::vector<double> operator+(const std::vector<double> &left, 
+    const std::vector<double> &right) {
+
+    if (left.size() != right.size()) {
+        std::cerr << "vector addition: different vector sizes" << std::endl;    
+        return std::vector<double>();
+    }
+
+    std::vector<double> result(left.size());
+    for (std::size_t i = 0; i < left.size(); ++i) {
+        result[i] = left[i] + right[i];
+    }
+
+    return result;
+}
+
+std::vector<double> operator-(const std::vector<double> &left, 
+    const std::vector<double> &right) {
+
+    if (left.size() != right.size()) {
+        std::cerr << "vector subtraction: different vector sizes" << std::endl;    
+        return std::vector<double>();
+    }
+
+    std::vector<double> result(left.size());
+    for (std::size_t i = 0; i < left.size(); ++i) {
+        result[i] = left[i] - right[i];
+    }
+
+    return result;
+}
+
 namespace so {
 
     std::vector<double> axpby(std::vector<double> &x, const double a, 
@@ -197,6 +229,20 @@ namespace so {
         ellpack_matrix result;
         result.idxs = idxs; 
         result.data = data;
+        return result;
+    }
+
+    // TODO description
+    // TODO matrix and right_side required dimensions matching
+    // TODO tolerance and max_iterations validition
+    std::vector<double> cg_solve(const ellpack_matrix &matrix, 
+        const std::vector<double> &right_side, const double tolerance, 
+        const int max_iterations) {
+
+        const std::size_t n_rows = right_side.size();
+        std::vector<double> result(n_rows, 0);
+        for (std::size_t i = 0; i < n_rows; ++i) {}
+
         return result;
     }
 
