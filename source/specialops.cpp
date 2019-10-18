@@ -6,42 +6,42 @@
 #include <string>
 #include <cmath>
 
-std::vector<double> operator+(const std::vector<double> &left, 
-    const std::vector<double> &right) {
+// std::vector<double> operator+(const std::vector<double> &left, 
+//     const std::vector<double> &right) {
 
-    if (left.size() != right.size()) {
-        std::cerr << "vector addition: different vector sizes" << std::endl;    
-        return std::vector<double>();
-    }
+//     if (left.size() != right.size()) {
+//         std::cerr << "vector addition: different vector sizes" << std::endl;    
+//         return std::vector<double>();
+//     }
 
-    std::vector<double> result(left.size());
-    for (std::size_t i = 0; i < left.size(); ++i) {
-        result[i] = left[i] + right[i];
-    }
+//     std::vector<double> result(left.size());
+//     for (std::size_t i = 0; i < left.size(); ++i) {
+//         result[i] = left[i] + right[i];
+//     }
 
-    return result;
-}
+//     return result;
+// }
 
-std::vector<double> operator-(const std::vector<double> &left, 
-    const std::vector<double> &right) {
+// std::vector<double> operator-(const std::vector<double> &left, 
+//     const std::vector<double> &right) {
 
-    if (left.size() != right.size()) {
-        std::cerr << "vector subtraction: different vector sizes" << std::endl;    
-        return std::vector<double>();
-    }
+//     if (left.size() != right.size()) {
+//         std::cerr << "vector subtraction: different vector sizes" << std::endl;    
+//         return std::vector<double>();
+//     }
 
-    std::vector<double> result(left.size());
-    for (std::size_t i = 0; i < left.size(); ++i) {
-        result[i] = left[i] - right[i];
-    }
+//     std::vector<double> result(left.size());
+//     for (std::size_t i = 0; i < left.size(); ++i) {
+//         result[i] = left[i] - right[i];
+//     }
 
-    return result;
-}
+//     return result;
+// }
 
 namespace so {
 
-    std::vector<double> axpby(std::vector<double> &x, const double a, 
-        std::vector<double> &y, const double b) {
+    std::vector<double> axpby(const std::vector<double> &x, const double a, 
+        const std::vector<double> &y, const double b) {
 
         if (x.size() != y.size()) {
             std::cerr << "so::axpby: different vector sizes" << std::endl;
@@ -57,7 +57,7 @@ namespace so {
         return result;
     }
 
-    double dot(std::vector<double> &x, std::vector<double> &y) {
+    double dot(const std::vector<double> &x, const std::vector<double> &y) {
 
         if (x.size() != y.size()) {
             std::cerr << "so::dot: different vector sizes" << std::endl;
@@ -192,8 +192,10 @@ namespace so {
     }
 
     // gets the diagonal elements from the matrix and form a 
-    // new instance of ellpack_matrix with only one non-zero element per row
-    ellpack_matrix derive_diagonal(const ellpack_matrix &matrix) {
+    // new instance of ellpack_matrix with only one non-zero element per row;
+    // inverse_elements specifies whether the resulting matrix will be inverted
+    ellpack_matrix derive_diagonal(const ellpack_matrix &matrix, 
+        const bool inverse_elements) {
 
         ellpack_matrix empty_matrix;
         empty_matrix.idxs = std::vector< std::vector<int> >(); 
@@ -216,7 +218,8 @@ namespace so {
                 if (col_idx >= i) {
 
                     if (col_idx == i)
-                        data[i][0] = matrix.data[i][j];
+                        data[i][0] = inverse_elements? 
+                            (1.0 / matrix.data[i][j]): matrix.data[i][j];
                     if (col_idx > i)
                         data[i][0] = 0;
                     break;
@@ -240,10 +243,77 @@ namespace so {
         const int max_iterations) {
 
         const std::size_t n_rows = right_side.size();
-        std::vector<double> result(n_rows, 0);
-        for (std::size_t i = 0; i < n_rows; ++i) {}
+        const ellpack_matrix &inv_diag = derive_diagonal(matrix, true);
 
-        return result;
+        plain_matrix pm = ellpack2plain(inv_diag, 4);
+        std::cout << "inv_diag: " << std::endl;
+        for (int i = 0; i < pm.rows.size(); ++i) {
+            for (int j = 0; j < pm.rows[i].size(); ++j) {
+                std::cout << pm.rows[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        std::vector<double> x(n_rows, 0);
+        // in general, if initial x is not 0-vector, r will be equal 
+        // `axpby(right_side, 1, spmv(matrix, x), -1)` but for 
+        // optimisation reasons it is omitted in this case 
+        //std::vector<double> r = right_side;
+        std::vector<double> r = axpby(right_side, 1, spmv(matrix, x), -1);
+        std::vector<double> p(n_rows);
+
+        // std::cout << "p: " << std::endl;
+        // for (std::size_t i = 0; i < p.size(); ++i) {
+        //     std::cout << p[i] << " | " << std::endl;
+        // }
+        // std::cout << std::endl;
+
+        double ro_prev = 0, ro_curr = 0;
+        bool convergence = false;
+        int k = 1;
+
+        do {
+
+            std::cout << "k=" << k << std::endl;
+            std::cout << "x: " << std::endl;
+            for (std::size_t i = 0; i < x.size(); ++i) {
+                std::cout << x[i] << " | " << std::endl;
+            }
+            std::cout << std::endl;
+
+            const std::vector<double> &z = spmv(inv_diag, r);
+            ro_curr = dot(r, z);
+            if (k == 1) {
+                p = z;
+            } else {
+                double beta = ro_curr / ro_prev;
+                p = axpby(z, 1, p, beta);
+            }
+
+            // std::cout << "p: " << std::endl;
+            // for (std::size_t i = 0; i < p.size(); ++i) {
+            //     std::cout << p[i] << " | " << std::endl;
+            // }
+            // std::cout << std::endl;
+
+            const std::vector<double> &q = spmv(matrix, p);
+            const double alpha = ro_curr / dot(p, q);
+            x = axpby(x, 1, p, alpha);
+            r = axpby(r, 1, q, -alpha);
+
+            if (ro_curr < tolerance or k >= max_iterations) {
+
+                std::cout << "  ro_curr < tolerance: " << (ro_curr < tolerance) << std::endl;
+                std::cout << "  k >= max_iterations: " << (k >= max_iterations) << std::endl;
+                convergence = true;
+            } else {
+                k++;
+                ro_prev = ro_curr;
+            }
+
+        } while (not convergence);
+
+        return x;
     }
 
     ellpack_matrix read_ellpack_matrix(const std::string path) {

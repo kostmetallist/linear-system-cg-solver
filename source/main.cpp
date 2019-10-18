@@ -232,5 +232,33 @@ int main(int argc, char *argv[]) {
     //     std::cout << std::endl;
     // }
 
+    plain_matrix test_matrix;
+    std::vector< std::vector<double> > rows(4, std::vector<double>(4));
+    rows[0][0] = 4;
+    rows[0][1] = 1;
+    rows[0][2] = 0;
+    rows[0][3] = 0;
+    rows[1][0] = 0;
+    rows[1][1] = 2;
+    rows[1][2] = 0;
+    rows[1][3] = -1;
+    rows[2][0] = 0;
+    rows[2][1] = 0;
+    rows[2][2] = 5;
+    rows[2][3] = 0;
+    rows[3][0] = 1;
+    rows[3][1] = 0;
+    rows[3][2] = 0;
+    rows[3][3] = 2;
+    test_matrix.rows = rows;
+
+    std::vector<double> b(4);
+    b[0] = 1;
+    b[1] = 0;
+    b[2] = -1;
+    b[3] = 2;
+
+    ellpack_matrix em = so::plain2ellpack(test_matrix, 2);
+    std::vector<double> solution = so::cg_solve(em, b, param_tol, param_maxit);
     exit(0);
 }
