@@ -6,38 +6,6 @@
 #include <string>
 #include <cmath>
 
-// std::vector<double> operator+(const std::vector<double> &left, 
-//     const std::vector<double> &right) {
-
-//     if (left.size() != right.size()) {
-//         std::cerr << "vector addition: different vector sizes" << std::endl;    
-//         return std::vector<double>();
-//     }
-
-//     std::vector<double> result(left.size());
-//     for (std::size_t i = 0; i < left.size(); ++i) {
-//         result[i] = left[i] + right[i];
-//     }
-
-//     return result;
-// }
-
-// std::vector<double> operator-(const std::vector<double> &left, 
-//     const std::vector<double> &right) {
-
-//     if (left.size() != right.size()) {
-//         std::cerr << "vector subtraction: different vector sizes" << std::endl;    
-//         return std::vector<double>();
-//     }
-
-//     std::vector<double> result(left.size());
-//     for (std::size_t i = 0; i < left.size(); ++i) {
-//         result[i] = left[i] - right[i];
-//     }
-
-//     return result;
-// }
-
 namespace so {
 
     std::vector<double> axpby(const std::vector<double> &x, const double a, 
@@ -82,6 +50,41 @@ namespace so {
             return std::vector<double>();
         } else if (matrix.idxs[0].size() > vec.size()) {
             std::cerr << "so::spmv: matrix column number a priori"
+                " exceeds vector size" << std::endl;
+            return std::vector<double>();
+        }
+
+        std::vector<double> result(matrix.idxs.size());
+        for (std::size_t i = 0; i < matrix.idxs.size(); ++i) {
+
+            double result_i = 0;
+            int last_extracted = -1;
+            for (std::size_t j = 0; j < matrix.idxs[i].size(); ++j) {
+
+                int idx_extracted = matrix.idxs[i][j];
+                if (idx_extracted == last_extracted) {
+                    break;
+                } else {
+                    result_i += matrix.data[i][j] * vec[idx_extracted];
+                    last_extracted = idx_extracted;
+                }
+            }
+
+            result[i] = result_i;
+        }
+
+        return result;
+    }
+
+    std::vector<double> spmv_consecutive(const ellpack_matrix &matrix, 
+        const std::vector<double> &vec) {
+
+        if (matrix.idxs.size() < 1) {
+            std::cerr << "so::spmv_consecutive: cannot process"
+                " empty matrix" << std::endl;
+            return std::vector<double>();
+        } else if (matrix.idxs[0].size() > vec.size()) {
+            std::cerr << "so::spmv_consecutive: matrix column number a priori"
                 " exceeds vector size" << std::endl;
             return std::vector<double>();
         }
@@ -245,56 +248,28 @@ namespace so {
         const std::size_t n_rows = right_side.size();
         const ellpack_matrix &inv_diag = derive_diagonal(matrix, true);
 
-        plain_matrix pm = ellpack2plain(inv_diag, 4);
-        std::cout << "inv_diag: " << std::endl;
-        for (int i = 0; i < pm.rows.size(); ++i) {
-            for (int j = 0; j < pm.rows[i].size(); ++j) {
-                std::cout << pm.rows[i][j] << " ";
-            }
-            std::cout << std::endl;
-        }
-
         std::vector<double> x(n_rows, 0);
         // in general, if initial x is not 0-vector, r will be equal 
         // `axpby(right_side, 1, spmv(matrix, x), -1)` but for 
         // optimisation reasons it is omitted in this case 
-        //std::vector<double> r = right_side;
-        std::vector<double> r = axpby(right_side, 1, spmv(matrix, x), -1);
-        std::vector<double> p(n_rows);
-
-        // std::cout << "p: " << std::endl;
-        // for (std::size_t i = 0; i < p.size(); ++i) {
-        //     std::cout << p[i] << " | " << std::endl;
-        // }
-        // std::cout << std::endl;
+        std::vector<double> r = right_side;
+        // std::vector<double> r = axpby(right_side, 1, spmv(matrix, x), -1);
+        std::vector<double> p(n_rows, 0);
 
         double ro_prev = 0, ro_curr = 0;
         bool convergence = false;
         int k = 1;
-
         do {
-
-            std::cout << "k=" << k << std::endl;
-            std::cout << "x: " << std::endl;
-            for (std::size_t i = 0; i < x.size(); ++i) {
-                std::cout << x[i] << " | " << std::endl;
-            }
-            std::cout << std::endl;
 
             const std::vector<double> &z = spmv(inv_diag, r);
             ro_curr = dot(r, z);
+
             if (k == 1) {
                 p = z;
             } else {
                 double beta = ro_curr / ro_prev;
                 p = axpby(z, 1, p, beta);
             }
-
-            // std::cout << "p: " << std::endl;
-            // for (std::size_t i = 0; i < p.size(); ++i) {
-            //     std::cout << p[i] << " | " << std::endl;
-            // }
-            // std::cout << std::endl;
 
             const std::vector<double> &q = spmv(matrix, p);
             const double alpha = ro_curr / dot(p, q);
@@ -303,8 +278,11 @@ namespace so {
 
             if (ro_curr < tolerance or k >= max_iterations) {
 
-                std::cout << "  ro_curr < tolerance: " << (ro_curr < tolerance) << std::endl;
-                std::cout << "  k >= max_iterations: " << (k >= max_iterations) << std::endl;
+                std::cout << "ro_curr < tolerance: " << 
+                    ((ro_curr < tolerance)? "true": "false") << std::endl;
+                std::cout << "k >= max_iterations: " << 
+                    ((k >= max_iterations)? "true": "false") << ", k = " << 
+                    k << std::endl;
                 convergence = true;
             } else {
                 k++;

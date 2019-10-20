@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <cmath>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -11,12 +12,12 @@ int param_nx = 10;
 int param_ny = 10;
 int param_nz = 10;
 // acceptable residual parameter
-double param_tol = 9.8E-9;
+double param_tol = 1E-9;
 // maximum iterations number
-int param_maxit = 1000;
+int param_maxit = 100;
 // thread number 
 int param_nt = 1;
-// testing mode flag
+// basic operations testing flag
 bool param_qa = false;
 // input matrix filename
 std::string param_input_filename = "";
@@ -184,81 +185,74 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    // ellpack_matrix em = so::read_ellpack_matrix(param_input_filename);
-    // plain_matrix pm = so::ellpack2plain(em, 4);
-    // std::cout << "input matrix: " << std::endl;
-    // for (int i = 0; i < pm.rows.size(); ++i) {
-    //     for (int j = 0; j < pm.rows[i].size(); ++j) {
-    //         std::cout << pm.rows[i][j] << " ";
-    //     }
-    //     std::cout << std::endl;
-    // }
+    // data generating
+    ellpack_matrix em = so::generate_diag_dominant_matrix(param_nx, param_ny, param_nz);
+    const std::size_t N = param_nx * param_ny * param_nz;
+    std::vector<double> b(N);
+    for (std::size_t i = 0; i < N; ++i) {
+        b[i] = std::cos(i);
+    }
 
-    // std::vector<double> x(4);
-    // x[0] = 1.0;
-    // x[1] = 2.0;
-    // x[2] = 1.0;
-    // x[3] = 1.0;
-    // std::cout << "x vector: " << std::endl;
-    // for (int i = 0; i < x.size(); ++i) {
-    //     std::cout << x[i] << " ";
-    // }
-    // std::cout << std::endl;
+    // basic operations testing
+    if (param_qa) {
+ 
+        std::vector<double> x(N), y(N);
+        for (std::size_t i = 0; i < N; ++i) {
+            x[i] = std::cos(i*i);
+            y[i] = std::sin(i*i);
+        }
 
-    // const std::vector<double> &result = so::spmv(em, x);
-    // std::cout << "result vector: " << std::endl;
-    // for (int i = 0; i < result.size(); ++i) {
-    //     std::cout << result[i] << " ";
-    // }
-    // std::cout << std::endl;
+        double t = omp_get_wtime();
+        const double dot_result = so::dot(x, y);
+        t = omp_get_wtime() - t;
+        std::cout << "Dot operation has been done in " << t*1000 << 
+            " ms" << std::endl;
+        double dot_test = 0;
 
-    // ellpack_matrix em = so::generate_diag_dominant_matrix(param_nx, param_ny, param_nz);
-    // plain_matrix pm = so::ellpack2plain(em, 25);
-    // std::cout << "generated original matrix: " << std::endl;
-    // for (int i = 0; i < pm.rows.size(); ++i) {
-    //     for (int j = 0; j < pm.rows[i].size(); ++j) {
-    //         printf("% 05.3lf ", pm.rows[i][j]);
-    //     }
-    //     std::cout << std::endl;
-    // }
+        for (std::size_t i = 0; i < N; ++i) {
+            dot_test += x[i] * y[i];
+        }
 
-    // ellpack_matrix diagonal = so::derive_diagonal(em);
-    // plain_matrix plain_diagonal = so::ellpack2plain(diagonal, 25);
-    // std::cout << "derived diagonal matrix: " << std::endl;
-    // for (int i = 0; i < plain_diagonal.rows.size(); ++i) {
-    //     for (int j = 0; j < plain_diagonal.rows[i].size(); ++j) {
-    //         printf("% 05.3lf ", plain_diagonal.rows[i][j]);
-    //     }
-    //     std::cout << std::endl;
-    // }
+        if (std::abs(dot_result - dot_test) > EPS) {
+            std::cerr << "--qa: dot assertion error: result (" << 
+                dot_result << ") is much different from expected (" << 
+                dot_test << ") value" << std::endl;
+        }
 
-    plain_matrix test_matrix;
-    std::vector< std::vector<double> > rows(4, std::vector<double>(4));
-    rows[0][0] = 4;
-    rows[0][1] = 1;
-    rows[0][2] = 0;
-    rows[0][3] = 0;
-    rows[1][0] = 0;
-    rows[1][1] = 2;
-    rows[1][2] = 0;
-    rows[1][3] = -1;
-    rows[2][0] = 0;
-    rows[2][1] = 0;
-    rows[2][2] = 5;
-    rows[2][3] = 0;
-    rows[3][0] = 1;
-    rows[3][1] = 0;
-    rows[3][2] = 0;
-    rows[3][3] = 2;
-    test_matrix.rows = rows;
+        t = omp_get_wtime();
+        const std::vector<double> axpby_result = so::axpby(x, 1.0, y, -1.0);
+        t = omp_get_wtime() - t;
+        std::cout << "Axpby operation has been done in " << t*1000 << 
+            " ms" << std::endl;
+        std::vector<double> axpby_test(N);
+        for (std::size_t i = 0; i < N; ++i) {
+            axpby_test[i] = x[i] - y[i];
+        }
 
-    std::vector<double> b(4);
-    b[0] = 1;
-    b[1] = 0;
-    b[2] = -1;
-    b[3] = 2;
+        for (std::size_t i = 0; i < N; ++i) {
+            if (std::abs(axpby_result[i] - axpby_test[i]) > EPS) {
+                std::cerr << "--qa: axpby assertion error: result in " << i <<
+                    "th position (" << axpby_result[i] << ") is much different"
+                    " from expected (" << axpby_test[i] << ")" << std::endl;
+                break;
+            }
+        }
 
-    ellpack_matrix em = so::plain2ellpack(test_matrix, 2);
+        t = omp_get_wtime();
+        const std::vector<double> spmv_result = so::spmv(em, x);
+        t = omp_get_wtime() - t;
+        std::cout << "Spmv operation has been done in " << t*1000 << 
+            " ms" << std::endl;
+        const std::vector<double> spmv_test = so::spmv_consecutive(em, x);
+        const double norm_result = std::sqrt(so::dot(spmv_result, spmv_result));
+        const double norm_test = std::sqrt(so::dot(spmv_test, spmv_test));
+        if (std::abs(norm_result - norm_test) > EPS) {
+            std::cerr << "--qa: spmv assertion error: result norm (" << 
+                norm_result << ") is much different from expected norm (" << 
+                norm_test << ") value" << std::endl;
+        }
+    }
+
     std::vector<double> solution = so::cg_solve(em, b, param_tol, param_maxit);
     exit(0);
 }

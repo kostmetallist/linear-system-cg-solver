@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#define EPS 1E-6
+#define EPS 1E-7
 #define PI  3.141592
 
 typedef struct {
@@ -27,6 +27,8 @@ namespace so {
         const std::vector<double> &y, const double b);
     double dot(const std::vector<double> &x, const std::vector<double> &y);
     std::vector<double> spmv(const ellpack_matrix &matrix, 
+        const std::vector<double> &vec);
+    std::vector<double> spmv_consecutive(const ellpack_matrix &matrix, 
         const std::vector<double> &vec);
     ellpack_matrix plain2ellpack(const plain_matrix &matrix, 
         const std::size_t max_nonzero);
