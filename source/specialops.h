@@ -25,7 +25,11 @@ namespace so {
 
     std::vector<double> axpby(const std::vector<double> &x, const double a, 
         const std::vector<double> &y, const double b);
+    std::vector<double> axpby_consecutive(const std::vector<double> &x, 
+        const double a, const std::vector<double> &y, const double b);
     double dot(const std::vector<double> &x, const std::vector<double> &y);
+    double dot_consecutive(const std::vector<double> &x, 
+        const std::vector<double> &y);
     std::vector<double> spmv(const ellpack_matrix &matrix, 
         const std::vector<double> &vec);
     std::vector<double> spmv_consecutive(const ellpack_matrix &matrix, 

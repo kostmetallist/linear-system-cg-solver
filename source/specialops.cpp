@@ -1,4 +1,5 @@
 #include "specialops.h"
+#include <omp.h>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -18,6 +19,24 @@ namespace so {
 
         std::size_t size = x.size();
         std::vector<double> result(size);
+        #pragma omp parallel for
+        for (std::size_t i = 0; i < size; ++i) {
+            result[i] = a*x[i] + b*y[i];
+        }
+
+        return result;
+    }
+
+    std::vector<double> axpby_consecutive(const std::vector<double> &x, const double a, 
+        const std::vector<double> &y, const double b) {
+
+        if (x.size() != y.size()) {
+            std::cerr << "so::axpby: different vector sizes" << std::endl;
+            return std::vector<double>();
+        }
+
+        std::size_t size = x.size();
+        std::vector<double> result(size);
         for (std::size_t i = 0; i < size; ++i) {
             result[i] = a*x[i] + b*y[i];
         }
@@ -26,6 +45,21 @@ namespace so {
     }
 
     double dot(const std::vector<double> &x, const std::vector<double> &y) {
+
+        if (x.size() != y.size()) {
+            std::cerr << "so::dot: different vector sizes" << std::endl;
+            return 0;
+        }
+
+        double dot_result = 0;
+        for (std::size_t i = 0; i < x.size(); ++i) {
+            dot_result += x[i] * y[i];
+        }
+
+        return dot_result;
+    }
+
+    double dot_consecutive(const std::vector<double> &x, const std::vector<double> &y) {
 
         if (x.size() != y.size()) {
             std::cerr << "so::dot: different vector sizes" << std::endl;
