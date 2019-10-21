@@ -185,6 +185,8 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+    omp_set_num_threads(param_nt);
+
     // data generating
     ellpack_matrix em = so::generate_diag_dominant_matrix(param_nx, param_ny, param_nz);
     const std::size_t N = param_nx * param_ny * param_nz;

@@ -52,6 +52,7 @@ namespace so {
         }
 
         double dot_result = 0;
+        #pragma omp parallel for reduction(+:dot_result)
         for (std::size_t i = 0; i < x.size(); ++i) {
             dot_result += x[i] * y[i];
         }
@@ -89,6 +90,7 @@ namespace so {
         }
 
         std::vector<double> result(matrix.idxs.size());
+        #pragma omp parallel for 
         for (std::size_t i = 0; i < matrix.idxs.size(); ++i) {
 
             double result_i = 0;
