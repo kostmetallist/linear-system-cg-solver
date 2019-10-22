@@ -195,6 +195,7 @@ int main(int argc, char *argv[]) {
         b[i] = std::cos(i);
     }
 
+    double t;
     // basic operations testing
     if (param_qa) {
  
@@ -204,7 +205,7 @@ int main(int argc, char *argv[]) {
             y[i] = std::sin(i*i);
         }
 
-        double t = omp_get_wtime();
+        t = omp_get_wtime();
         const double dot_result = so::dot(x, y);
         t = omp_get_wtime() - t;
         std::cout << "Dot operation has been done in " << t*1000 << 
@@ -253,8 +254,35 @@ int main(int argc, char *argv[]) {
                 norm_result << ") is much different from expected norm (" << 
                 norm_test << ") value" << std::endl;
         }
+
+        t = omp_get_wtime();
+        std::vector<double> copy_test1(N);
+        so::copy_vector(copy_test1, x);
+        t = omp_get_wtime() - t;
+        std::cout << "Parallel copy vector operation has been done in " << 
+            t*1000 << " ms" << std::endl; 
+
+        t = omp_get_wtime();
+        std::vector<double> copy_test2(N);
+        copy_test2 = x;
+        t = omp_get_wtime() - t;
+        std::cout << "Ordinary copy vector operation has been done in " << 
+            t*1000 << " ms" << std::endl; 
+
+        for (std::size_t i = 0; i < N; ++i) {
+            if (copy_test1[i] != copy_test2[i]) {
+                std::cerr << "--qa: copy assertion error: result in " << i <<
+                    "th position of first vector (" << copy_test1[i] << 
+                    ") is not equal to appropriate element of second vector (" 
+                    << axpby_test[i] << ")" << std::endl;
+                break;
+            }
+        }
     }
 
+    t = omp_get_wtime();
     std::vector<double> solution = so::cg_solve(em, b, param_tol, param_maxit);
+    t = omp_get_wtime() - t;
+    std::cout << "Solver is finished in " << t*1000 << " ms" << std::endl;
     exit(0);
 }

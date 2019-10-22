@@ -16,12 +16,10 @@ typedef struct
     std::vector< std::vector<double> > data;
 } ellpack_matrix;
 
-std::vector<double> operator+(const std::vector<double> &left, 
-    const std::vector<double> &right);
-std::vector<double> operator-(const std::vector<double> &left, 
-    const std::vector<double> &right);
 
 namespace so {
+
+    void copy_vector(std::vector<double> &to, const std::vector<double> &from);
 
     std::vector<double> axpby(const std::vector<double> &x, const double a, 
         const std::vector<double> &y, const double b);
