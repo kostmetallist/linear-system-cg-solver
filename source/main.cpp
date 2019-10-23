@@ -19,8 +19,10 @@ int param_maxit = 100;
 int param_nt = 1;
 // basic operations testing flag
 bool param_qa = false;
-// input matrix filename
-std::string param_input_filename = "";
+// path to file containing input ELLPACK matrix 
+std::string param_matrix_filename = "";
+// path to file containing input vector 
+std::string param_vector_filename = "";
 const bool DEBUG_INFO = true;
 
 
@@ -86,7 +88,7 @@ int main(int argc, char *argv[]) {
         "[--nt=<thread number> | -n <...>] \n"
         "[--qa] \n"
         "[--help | -h] \n"
-        "[<path to ELLPACK input file>]";
+        "[<path to ELLPACK matrix file> <path to vector file>]";
 
     while (true) {
 
@@ -146,11 +148,15 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // if anything was specified after named parameters, 
-    // first one will be treated as an input filename, while 
-    // others will be ignored
-    if (optind < argc) {
-        param_input_filename = argv[optind];
+    // If some options were specified after named parameters, 
+    // first one will be treated as a path for matrix input, 
+    // second will be used as a path for vector input, 
+    // anything else will be ignored.
+    // If user has not provided two filenames (i.e. has set only one), 
+    // input filenames won't be processed.
+    if (optind < argc and (argc-optind) >= 2) {
+        param_matrix_filename = argv[optind];
+        param_vector_filename = argv[optind+1];
     }
 
     if (argc == 1) {
@@ -177,8 +183,10 @@ int main(int argc, char *argv[]) {
             (int) param_qa
         );
 
-        std::cout << "  string param_input_filename = \"" <<
-            param_input_filename << "\"" << std::endl;
+        std::cout << "  string param_matrix_filename = \"" <<
+            param_matrix_filename << "\"" << std::endl;
+        std::cout << "  string param_vector_filename = \"" <<
+            param_vector_filename << "\"" << std::endl;
     }
 
     if (!validate_parameters()) {
@@ -190,14 +198,42 @@ int main(int argc, char *argv[]) {
     std::vector<double> b;
     std::size_t N;
 
-    // perform data generating if input file haven't been specified
-    if (param_input_filename.empty()) {
+    // perform data generating if input files haven't been specified correctly
+    if (param_matrix_filename.empty() or param_vector_filename.empty()) {
 
         N = param_nx * param_ny * param_nz;
         em = so::generate_diag_dominant_matrix(param_nx, param_ny, param_nz);
         b.reserve(N);
         for (std::size_t i = 0; i < N; ++i) {
             b.push_back(std::cos(i));
+        }
+    } else {
+
+        em = so::read_ellpack_matrix(param_matrix_filename);
+        b = so::read_vector(param_vector_filename);
+        if (em.idxs.size() != b.size()) {
+            std::cerr << "input matrix has " << em.idxs.size() << " rows" <<
+                " while input vector has " << b.size() << "; cannot apply" << 
+                " solver on given data -- aborting" << std::endl;
+            exit(1);
+        }
+
+        N = b.size();
+        if (DEBUG_INFO) {
+
+            plain_matrix pm = so::ellpack2plain(em, 4);
+            std::cout << "input matrix: " << std::endl;
+            for (std::size_t i = 0; i < N; ++i) {
+                for (std::size_t j = 0; j < pm.rows[i].size(); ++j) {
+                    std::cout << pm.rows[i][j] << " ";
+                }
+                std::cout << std::endl;
+            }
+
+            std::cout << "input vector: " << std::endl;
+            for (std::size_t j = 0; j < N; ++j) {
+                std::cout << b[j] << " " << std::endl;
+            }
         }
     }
 
