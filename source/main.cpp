@@ -211,19 +211,12 @@ int main(int argc, char *argv[]) {
 
         em = so::read_ellpack_matrix(param_matrix_filename);
         b = so::read_vector(param_vector_filename);
-        if (em.idxs.size() != b.size()) {
-            std::cerr << "input matrix has " << em.idxs.size() << " rows" <<
-                " while input vector has " << b.size() << "; cannot apply" << 
-                " solver on given data -- aborting" << std::endl;
-            exit(1);
-        }
-
         N = b.size();
         if (DEBUG_INFO) {
 
             plain_matrix pm = so::ellpack2plain(em, 4);
             std::cout << "input matrix: " << std::endl;
-            for (std::size_t i = 0; i < N; ++i) {
+            for (std::size_t i = 0; i < pm.rows.size(); ++i) {
                 for (std::size_t j = 0; j < pm.rows[i].size(); ++j) {
                     std::cout << pm.rows[i][j] << " ";
                 }
@@ -231,7 +224,7 @@ int main(int argc, char *argv[]) {
             }
 
             std::cout << "input vector: " << std::endl;
-            for (std::size_t j = 0; j < N; ++j) {
+            for (std::size_t j = 0; j < b.size(); ++j) {
                 std::cout << b[j] << " " << std::endl;
             }
         }
