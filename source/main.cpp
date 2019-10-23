@@ -21,7 +21,7 @@ int param_nt = 1;
 bool param_qa = false;
 // input matrix filename
 std::string param_input_filename = "";
-const bool DEBUG_MODE = true;
+const bool DEBUG_INFO = true;
 
 
 bool validate_parameters() {
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
         std::cout << help_message << std::endl;
     }
 
-    if (DEBUG_MODE) {
+    if (DEBUG_INFO) {
 
         printf(
             "Updated params: \n"
@@ -177,8 +177,8 @@ int main(int argc, char *argv[]) {
             (int) param_qa
         );
 
-        std::cout << "  string param_input_filename = " <<
-            param_input_filename << std::endl;
+        std::cout << "  string param_input_filename = \"" <<
+            param_input_filename << "\"" << std::endl;
     }
 
     if (!validate_parameters()) {
@@ -186,17 +186,26 @@ int main(int argc, char *argv[]) {
     }
 
     omp_set_num_threads(param_nt);
+    ellpack_matrix em;
+    std::vector<double> b;
+    std::size_t N;
 
-    // data generating
-    ellpack_matrix em = so::generate_diag_dominant_matrix(param_nx, param_ny, param_nz);
-    const std::size_t N = param_nx * param_ny * param_nz;
-    std::vector<double> b(N);
-    for (std::size_t i = 0; i < N; ++i) {
-        b[i] = std::cos(i);
+    // perform data generating if input file haven't been specified
+    if (param_input_filename.empty()) {
+
+        N = param_nx * param_ny * param_nz;
+        em = so::generate_diag_dominant_matrix(param_nx, param_ny, param_nz);
+        b.reserve(N);
+        for (std::size_t i = 0; i < N; ++i) {
+            b[i] = std::cos(i);
+        }
     }
 
+    // time measurements storage value
     double t;
     // basic operations testing
+    // executing three times each for minimizing randomness
+    // TODO add "and GENERATION MODE"
     if (param_qa) {
  
         std::vector<double> x(N), y(N);
@@ -206,9 +215,11 @@ int main(int argc, char *argv[]) {
         }
 
         t = omp_get_wtime();
-        const double dot_result = so::dot(x, y);
+        double dot_result = so::dot(x, y);
+               dot_result = so::dot(x, y);
+               dot_result = so::dot(x, y);
         t = omp_get_wtime() - t;
-        std::cout << "Dot operation has been done in " << t*1000 << 
+        std::cout << "Dot operation has been done in " << (t/3.0)*1000 << 
             " ms" << std::endl;
         double dot_test = 0;
 
@@ -223,9 +234,11 @@ int main(int argc, char *argv[]) {
         }
 
         t = omp_get_wtime();
-        const std::vector<double> axpby_result = so::axpby(x, 1.0, y, -1.0);
+        std::vector<double> axpby_result = so::axpby(x, 1.0, y, -1.0);
+                            axpby_result = so::axpby(x, 1.0, y, -1.0);
+                            axpby_result = so::axpby(x, 1.0, y, -1.0);
         t = omp_get_wtime() - t;
-        std::cout << "Axpby operation has been done in " << t*1000 << 
+        std::cout << "Axpby operation has been done in " << (t/3.0)*1000 << 
             " ms" << std::endl;
         std::vector<double> axpby_test(N);
         for (std::size_t i = 0; i < N; ++i) {
@@ -242,9 +255,11 @@ int main(int argc, char *argv[]) {
         }
 
         t = omp_get_wtime();
-        const std::vector<double> spmv_result = so::spmv(em, x);
+        std::vector<double> spmv_result = so::spmv(em, x);
+                            spmv_result = so::spmv(em, x);
+                            spmv_result = so::spmv(em, x);
         t = omp_get_wtime() - t;
-        std::cout << "Spmv operation has been done in " << t*1000 << 
+        std::cout << "Spmv operation has been done in " << (t/3.0)*1000 << 
             " ms" << std::endl;
         const std::vector<double> spmv_test = so::spmv_consecutive(em, x);
         const double norm_result = std::sqrt(so::dot(spmv_result, spmv_result));

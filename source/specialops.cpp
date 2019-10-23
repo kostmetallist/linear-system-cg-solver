@@ -92,7 +92,7 @@ namespace so {
     }
 
     // defines A*x operation, where A represents matrix with N columns and
-    // x is a N-row vector
+    // x is a N-row [transposed] vector
     std::vector<double> spmv(const ellpack_matrix &matrix, 
         const std::vector<double> &vec) {
 
@@ -338,30 +338,30 @@ namespace so {
 
             if (k == 1) {
                 #if CUSTOM_COPY
-                copy_vector(p, z);
+                    copy_vector(p, z);
                 #else 
-                p = z;
+                    p = z;
                 #endif
             } else {
                 double beta = ro_curr / ro_prev;
                 #if CUSTOM_COPY
-                copy_vector(p, axpby(z, 1, p, beta));
+                    copy_vector(p, axpby(z, 1, p, beta));
                 #else 
-                p = axpby(z, 1, p, beta);
+                    p = axpby(z, 1, p, beta);
                 #endif
             }
 
             const std::vector<double> &q = spmv(matrix, p);
             const double alpha = ro_curr / dot(p, q);
             #if CUSTOM_COPY
-            copy_vector(x, axpby(x, 1, p, alpha));
+                copy_vector(x, axpby(x, 1, p, alpha));
             #else 
-            x = axpby(x, 1, p, alpha);
+                x = axpby(x, 1, p, alpha);
             #endif
             #if CUSTOM_COPY
-            copy_vector(r, axpby(r, 1, q, -alpha));
+                copy_vector(r, axpby(r, 1, q, -alpha));
             #else 
-            r = axpby(r, 1, q, -alpha);
+                r = axpby(r, 1, q, -alpha);
             #endif
 
             if (ro_curr < tolerance or k >= max_iterations) {
