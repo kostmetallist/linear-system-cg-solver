@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
         em = so::generate_diag_dominant_matrix(param_nx, param_ny, param_nz);
         b.reserve(N);
         for (std::size_t i = 0; i < N; ++i) {
-            b[i] = std::cos(i);
+            b.push_back(std::cos(i));
         }
     }
 

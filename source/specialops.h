@@ -43,6 +43,7 @@ namespace so {
         const int max_iterations);
 
     ellpack_matrix read_ellpack_matrix(const std::string path);
+    std::vector<double> read_vector(const std::string path);
     ellpack_matrix generate_diag_dominant_matrix(const int nx, const int ny, 
         const int nz);
 }

@@ -474,6 +474,45 @@ namespace so {
         return result;
     }
 
+    // opens a file by path specified as an argument and parses every 
+    // string to appropriate `double` element of resulting vector
+    std::vector<double> read_vector(const std::string path) {
+
+        std::vector<double> empty_vector;
+        std::ifstream in(path.c_str());
+        if (!in) {
+            std::cerr << "so::read_vector: an issue"
+                " occurred while creating ifstream" << std::endl;
+            return empty_vector;
+        }
+
+        std::string input;
+        if (!std::getline(in, input)) {
+            std::cerr << "so::read_vector: first string must be valid positive"
+                " integer representing vector elements number" << std::endl;
+            return empty_vector;
+        }
+
+        int n_rows, line_counter = 0;
+        std::istringstream(input) >> n_rows;
+        std::vector<double> result(n_rows);
+        while (std::getline(in, input)) {
+
+            double elem;
+            std::istringstream(input) >> elem;
+            result[line_counter++] = elem;
+        }
+
+        if (line_counter != n_rows) {
+            std::cerr << "so::read_vector: elements number specified in header"
+                " and elements number been read are not matching" << std::endl;
+            return empty_vector;
+        }
+
+        return result;
+
+    }
+
     ellpack_matrix generate_diag_dominant_matrix(const int nx, 
         const int ny, const int nz) {
 
