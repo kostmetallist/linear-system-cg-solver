@@ -11,8 +11,11 @@
 int param_nx = 10;
 int param_ny = 10;
 int param_nz = 10;
+int param_px = 1;
+int param_py = 1;
+int param_pz = 1;
 // acceptable residual parameter
-double param_tol = 1E-9;
+double param_tol = 1E-8;
 // maximum iterations number
 int param_maxit = 100;
 // thread number 
@@ -50,6 +53,27 @@ bool validate_parameters() {
         is_valid = false;
     }
 
+    if (param_px <= 0) {
+        std::cerr << "input parameters error:" 
+            " --px must be positive integer, but "<< 
+            param_px << " was given" << std::endl;
+        is_valid = false;
+    }
+
+    if (param_py <= 0) {
+        std::cerr << "input parameters error:" 
+            " --py must be positive integer, but "<< 
+            param_py << " was given" << std::endl;
+        is_valid = false;
+    }
+
+    if (param_pz <= 0) {
+        std::cerr << "input parameters error:" 
+            " --pz must be positive integer, but "<< 
+            param_pz << " was given" << std::endl;
+        is_valid = false;
+    }
+
     if (param_tol < 0) {
         std::cerr << "input parameters error:" 
             " --tol (-t) must be positive real number, but "<< 
@@ -83,6 +107,9 @@ int main(int argc, char *argv[]) {
         "[--nx=<generated matrix x size>] \n"
         "[--ny=<generated matrix y size>] \n"
         "[--nz=<generated matrix z size>] \n"
+        "[--px=<processes number for x axis>] \n"
+        "[--py=<processes number for y axis>] \n"
+        "[--pz=<processes number for z axis>] \n"
         "[--tol=<acceptable residual> | -t <...>] \n" 
         "[--maxit=<maximum solver iterations number> | -i <...>] \n"
         "[--nt=<thread number> | -n <...>] \n"
@@ -96,7 +123,10 @@ int main(int argc, char *argv[]) {
             { "nx",    required_argument, 0,  1  }, 
             { "ny",    required_argument, 0,  2  },
             { "nz",    required_argument, 0,  3  },
-            { "qa",    no_argument,       0,  4  },
+            { "px",    required_argument, 0,  4  },
+            { "py",    required_argument, 0,  5  },
+            { "pz",    required_argument, 0,  6  },
+            { "qa",    no_argument,       0,  7  },
             { "tol",   required_argument, 0, 't' },
             { "maxit", required_argument, 0, 'i' },
             { "nt",    required_argument, 0, 'n' }, 
@@ -124,6 +154,18 @@ int main(int argc, char *argv[]) {
                 break;
 
             case 4:
+                param_px = atoi(optarg);
+                break;
+
+            case 5:
+                param_py = atoi(optarg);
+                break;
+
+            case 6:
+                param_pz = atoi(optarg);
+                break;
+
+            case 7:
                 param_qa = true;
                 break;
 
@@ -170,6 +212,9 @@ int main(int argc, char *argv[]) {
             "  int param_nx = %d\n"
             "  int param_ny = %d\n"
             "  int param_nz = %d\n"
+            "  int param_px = %d\n"
+            "  int param_py = %d\n"
+            "  int param_pz = %d\n"
             "  double param_tol = %lf\n"
             "  int param_maxit = %d\n"
             "  int param_nt = %d\n"
@@ -177,6 +222,9 @@ int main(int argc, char *argv[]) {
             param_nx, 
             param_ny, 
             param_nz, 
+            param_px, 
+            param_py, 
+            param_pz, 
             param_tol, 
             param_maxit, 
             param_nt, 
