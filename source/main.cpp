@@ -234,7 +234,6 @@ int main(int argc, char *argv[]) {
     double t;
     // basic operations testing
     // executing three times each for minimizing randomness
-    // TODO add "and GENERATION MODE"
     if (param_qa) {
  
         std::vector<double> x(N), y(N);
