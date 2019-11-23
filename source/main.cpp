@@ -253,16 +253,16 @@ int main(int argc, char *argv[]) {
         }
 
         if (!validate_parameters()) {
-            MPI_Abort(MPI_COMM_WORLD, errcode.INVALID_PARAMETERS);
-            exit(errcode.INVALID_PARAMETERS);
+            MPI_Abort(MPI_COMM_WORLD, INVALID_PARAMETERS);
+            exit(INVALID_PARAMETERS);
         }
 
         if (nproc != param_px*param_py*param_pz) {
 
-            std:cerr << "error: process number dedicated" <<
+            std::cerr << "error: process number dedicated" <<
                 " for program is not equal to px*py*pz" << std::endl;
-            MPI_Abort(MPI_COMM_WORLD, errcode.AMBIGUOUS_PROCESS_NUMBER);
-            exit(errcode.AMBIGUOUS_PROCESS_NUMBER);
+            MPI_Abort(MPI_COMM_WORLD, AMBIGUOUS_PROCESS_NUMBER);
+            exit(AMBIGUOUS_PROCESS_NUMBER);
         }
 
         omp_set_num_threads(param_nt);
