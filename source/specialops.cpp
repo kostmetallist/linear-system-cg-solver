@@ -1,4 +1,5 @@
 #include "specialops.h"
+#include <mpi.h>
 #include <omp.h>
 #include <vector>
 #include <iostream>
