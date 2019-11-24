@@ -1,11 +1,11 @@
 IBM_FLAGS = -qsmp=omp
 GNU_STANDARD = c++11
 
-bgp: COMP = bgxlc++_r
+bgp: COMP = mpixlcxx_r
 bgp: CFLAGS = $(IBM_FLAGS)
-gnu: COMP = g++
+gnu: COMP = mpicxx
 gnu: CFLAGS = -fopenmp -std=$(GNU_STANDARD)
-polus: COMP = xlc++_r
+polus: COMP = mpixlC
 polus: CFLAGS = $(IBM_FLAGS)
 
 .PHONY: bgp polus gnu clean
