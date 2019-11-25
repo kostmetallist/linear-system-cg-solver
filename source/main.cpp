@@ -265,7 +265,6 @@ int main(int argc, char *argv[]) {
             exit(AMBIGUOUS_PROCESS_NUMBER);
         }
 
-        omp_set_num_threads(param_nt);
         ellpack_matrix em;
         std::vector<double> b;
         std::size_t N;
@@ -399,12 +398,21 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        t = omp_get_wtime();
-        std::vector<double> solution = 
-            so::cg_solve(em, b, param_tol, param_maxit);
-        t = omp_get_wtime() - t;
-        std::cout << "Solver is finished in " << t*1000 << " ms" << std::endl;
+        // t = omp_get_wtime();
+        // std::vector<double> solution = 
+        //     so::cg_solve(em, b, param_tol, param_maxit);
+        // t = omp_get_wtime() - t;
+        // std::cout << "Solver is finished in " << t*1000 << " ms" << std::endl;
     }
+
+
+    // every process 
+    MPI_Bcast(static_cast<void *>(&param_nt), 1, MPI_INT, 
+        MASTER_PROCESS, MPI_COMM_WORLD);
+
+    printf("process #%d, param_nt=%d\n", rank, param_nt);
+    omp_set_num_threads(param_nt);
+
 
     MPI_Finalize();
     exit(0);
