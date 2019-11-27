@@ -12,20 +12,6 @@
 
 namespace so {
 
-    // custom vector copying implementation using threads for values moving
-    void copy_vector(std::vector<double> &to, const std::vector<double> &from) {
-
-        if (to.size() != from.size()) {
-            std::cerr << "so::copy_vector: different vector sizes" << std::endl;
-            return;
-        }
-
-        #pragma omp parallel for
-        for (int i = 0; i < from.size(); ++i) {
-            to[i] = from[i];
-        }
-    }
-
     std::vector<double> axpby(const std::vector<double> &x, const double a, 
         const std::vector<double> &y, const double b) {
 
@@ -60,6 +46,24 @@ namespace so {
 
         return result;
     }
+
+    // void axpby_mpi(const std::vector<double> &x, const double a, 
+    //     const std::vector<double> &y, const double b) {
+
+    //     if (x.size() != y.size()) {
+    //         std::cerr << "so::axpby: different vector sizes" << std::endl;
+    //         return std::vector<double>();
+    //     }
+
+    //     std::size_t size = x.size();
+    //     std::vector<double> result(size);
+    //     #pragma omp parallel for
+    //     for (int i = 0; i < size; ++i) {
+    //         result[i] = a*x[i] + b*y[i];
+    //     }
+
+    //     return result;
+    // }
 
     double dot(const std::vector<double> &x, const std::vector<double> &y) {
 
@@ -320,12 +324,8 @@ namespace so {
         // in general, if initial x is not 0-vector, r will be equal 
         // `axpby(right_side, 1, spmv(matrix, x), -1)` but for 
         // optimisation reasons it is omitted in this case 
-        #if CUSTOM_COPY
         std::vector<double> r(n_rows);
-        copy_vector(r, right_side);
-        #else 
         std::vector<double> r = right_side;
-        #endif
         // std::vector<double> r = axpby(right_side, 1, spmv(matrix, x), -1);
         std::vector<double> p(n_rows, 0);
 
@@ -338,32 +338,16 @@ namespace so {
             ro_curr = dot(r, z);
 
             if (k == 1) {
-                #if CUSTOM_COPY
-                    copy_vector(p, z);
-                #else 
-                    p = z;
-                #endif
+                p = z;
             } else {
                 double beta = ro_curr / ro_prev;
-                #if CUSTOM_COPY
-                    copy_vector(p, axpby(z, 1, p, beta));
-                #else 
-                    p = axpby(z, 1, p, beta);
-                #endif
+                p = axpby(z, 1, p, beta);
             }
 
             const std::vector<double> &q = spmv(matrix, p);
             const double alpha = ro_curr / dot(p, q);
-            #if CUSTOM_COPY
-                copy_vector(x, axpby(x, 1, p, alpha));
-            #else 
-                x = axpby(x, 1, p, alpha);
-            #endif
-            #if CUSTOM_COPY
-                copy_vector(r, axpby(r, 1, q, -alpha));
-            #else 
-                r = axpby(r, 1, q, -alpha);
-            #endif
+            x = axpby(x, 1, p, alpha);
+            r = axpby(r, 1, q, -alpha);
 
             if (ro_curr < tolerance or k >= max_iterations) {
 
