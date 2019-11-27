@@ -30,7 +30,12 @@ std::string param_vector_filename = "";
 
 const bool DEBUG_INFO = true;
 const int  MASTER_PROCESS = 0;
-int rank, nproc;
+// total number of processes involved
+int nproc, 
+// process id
+    rank, 
+// 3 'spacial' coordinates for each process according to rank
+    proc_x, proc_y, proc_z;
 
 typedef enum {
     INVALID_PARAMETERS = 1,
@@ -373,29 +378,29 @@ int main(int argc, char *argv[]) {
                     norm_test << ") value" << std::endl;
             }
 
-            t = omp_get_wtime();
-            std::vector<double> copy_test1(N);
-            so::copy_vector(copy_test1, x);
-            t = omp_get_wtime() - t;
-            std::cout << "Parallel copy vector operation has been done in " << 
-                t*1000 << " ms" << std::endl; 
+            // t = omp_get_wtime();
+            // std::vector<double> copy_test1(N);
+            // so::copy_vector(copy_test1, x);
+            // t = omp_get_wtime() - t;
+            // std::cout << "Parallel copy vector operation has been done in " << 
+            //     t*1000 << " ms" << std::endl; 
 
-            t = omp_get_wtime();
-            std::vector<double> copy_test2(N);
-            copy_test2 = x;
-            t = omp_get_wtime() - t;
-            std::cout << "Ordinary copy vector operation has been done in " << 
-                t*1000 << " ms" << std::endl; 
+            // t = omp_get_wtime();
+            // std::vector<double> copy_test2(N);
+            // copy_test2 = x;
+            // t = omp_get_wtime() - t;
+            // std::cout << "Ordinary copy vector operation has been done in " << 
+            //     t*1000 << " ms" << std::endl; 
 
-            for (std::size_t i = 0; i < N; ++i) {
-                if (copy_test1[i] != copy_test2[i]) {
-                    std::cerr << "--qa: copy assertion error: result in " << 
-                        i << "th position of first vector (" << copy_test1[i] << 
-                        ") is not equal to appropriate element of second "
-                        "vector (" << axpby_test[i] << ")" << std::endl;
-                    break;
-                }
-            }
+            // for (std::size_t i = 0; i < N; ++i) {
+            //     if (copy_test1[i] != copy_test2[i]) {
+            //         std::cerr << "--qa: copy assertion error: result in " << 
+            //             i << "th position of first vector (" << copy_test1[i] << 
+            //             ") is not equal to appropriate element of second "
+            //             "vector (" << axpby_test[i] << ")" << std::endl;
+            //         break;
+            //     }
+            // }
         }
 
         // t = omp_get_wtime();
@@ -405,14 +410,21 @@ int main(int argc, char *argv[]) {
         // std::cout << "Solver is finished in " << t*1000 << " ms" << std::endl;
     }
 
-
-    // every process 
-    MPI_Bcast(static_cast<void *>(&param_nt), 1, MPI_INT, 
+    MPI_Bcast(static_cast<void *>(&param_px), 1, MPI_INT, 
+        MASTER_PROCESS, MPI_COMM_WORLD);
+    MPI_Bcast(static_cast<void *>(&param_py), 1, MPI_INT, 
+        MASTER_PROCESS, MPI_COMM_WORLD);
+    MPI_Bcast(static_cast<void *>(&param_pz), 1, MPI_INT, 
         MASTER_PROCESS, MPI_COMM_WORLD);
 
-    printf("process #%d, param_nt=%d\n", rank, param_nt);
-    omp_set_num_threads(param_nt);
+    proc_x = rank % param_px;
+    proc_y = (rank % (param_px * param_py)) / param_px;
+    proc_z = rank / (param_px * param_py);
+    printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
 
+    MPI_Bcast(static_cast<void *>(&param_nt), 1, MPI_INT, 
+        MASTER_PROCESS, MPI_COMM_WORLD);
+    omp_set_num_threads(param_nt);
 
     MPI_Finalize();
     exit(0);
