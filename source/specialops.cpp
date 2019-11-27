@@ -324,7 +324,6 @@ namespace so {
         // in general, if initial x is not 0-vector, r will be equal 
         // `axpby(right_side, 1, spmv(matrix, x), -1)` but for 
         // optimisation reasons it is omitted in this case 
-        std::vector<double> r(n_rows);
         std::vector<double> r = right_side;
         // std::vector<double> r = axpby(right_side, 1, spmv(matrix, x), -1);
         std::vector<double> p(n_rows, 0);
