@@ -4,7 +4,7 @@
   <img src="img/sparse-matrix.png" alt="<icon here>" width="384"/>
 </p>
 
-Imlementation of linear system solver using Jacobi preconditioner. Using OpenMP for parrallelizing.
+Implementation of linear system solver using Jacobi preconditioner. Using OpenMP for parrallelizing.
 
 #### Compilation 
 
@@ -20,7 +20,18 @@ The `Makefile` also supports C++ standard switching for GNU compilation, which i
 
 #### Running
 
-Use the result of installation make command, i.e. `./solver`.
+Use the result of installation make command, i.e. `./solver <options>`, where `<options>` includes zero or more of following parameters:
+```
+  --nx=<generated matrix x size> (default 10)
+  --ny=<generated matrix y size> (default 10)
+  --nz=<generated matrix z size> (default 10)
+  --tol=<acceptable residual> | -t <acceptable residual> (default 1E-9)
+  --maxit=<max solver iterations number> | -i <max solver iterations number>] (default 100)
+  --nt=<thread number> | -n <thread number> (default 1, i.e. consecutive execution)
+  --qa (testing basic operations with vectors and matrices, default false)
+  --help | -h (show help message containing the same info as in this table)
+  <path to ELLPACK matrix file> <path to vector file>
+```
 
 #### Cleaning out
 
