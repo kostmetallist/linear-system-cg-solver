@@ -47,23 +47,27 @@ namespace so {
         return result;
     }
 
-    // void axpby_mpi(const std::vector<double> &x, const double a, 
-    //     const std::vector<double> &y, const double b) {
+    void axpby_mpi(std::vector<double> &res, const std::vector<double> &x, 
+        const double a, const std::vector<double> &y, const double b) {
 
-    //     if (x.size() != y.size()) {
-    //         std::cerr << "so::axpby: different vector sizes" << std::endl;
-    //         return std::vector<double>();
-    //     }
+        if (x.size() != y.size()) {
+            std::cerr << "so::axpby_mpi: different x and y vector sizes" 
+                << std::endl;
+            return;
+        }
 
-    //     std::size_t size = x.size();
-    //     std::vector<double> result(size);
-    //     #pragma omp parallel for
-    //     for (int i = 0; i < size; ++i) {
-    //         result[i] = a*x[i] + b*y[i];
-    //     }
+        if (res.size() != x.size()) {
+            std::cerr << "so::axpby_mpi: result and input vector sizes"
+                " do not match" << std::endl;
+            return;
+        }
 
-    //     return result;
-    // }
+        const std::size_t size = x.size();
+        #pragma omp parallel for
+        for (int i = 0; i < size; ++i) {
+            res[i] = a*x[i] + b*y[i];
+        }
+    }
 
     double dot(const std::vector<double> &x, const std::vector<double> &y) {
 
