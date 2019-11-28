@@ -118,6 +118,9 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
+    // used for param_p(x|y|z) and param_nt send/receive
+    int shared_params[4];
+
     if (rank == MASTER_PROCESS) {
 
         int option_char = -1, 
@@ -270,6 +273,11 @@ int main(int argc, char *argv[]) {
             exit(AMBIGUOUS_PROCESS_NUMBER);
         }
 
+        shared_params[0] = param_px;
+        shared_params[1] = param_py;
+        shared_params[2] = param_pz;
+        shared_params[3] = param_nt;
+
         ellpack_matrix em;
         std::vector<double> b;
         std::size_t N;
@@ -410,21 +418,28 @@ int main(int argc, char *argv[]) {
         // std::cout << "Solver is finished in " << t*1000 << " ms" << std::endl;
     }
 
-    MPI_Bcast(static_cast<void *>(&param_px), 1, MPI_INT, 
-        MASTER_PROCESS, MPI_COMM_WORLD);
-    MPI_Bcast(static_cast<void *>(&param_py), 1, MPI_INT, 
-        MASTER_PROCESS, MPI_COMM_WORLD);
-    MPI_Bcast(static_cast<void *>(&param_pz), 1, MPI_INT, 
-        MASTER_PROCESS, MPI_COMM_WORLD);
+    // MPI_Bcast(static_cast<void *>(&param_px), 1, MPI_INT, 
+    //     MASTER_PROCESS, MPI_COMM_WORLD);
+    // MPI_Bcast(static_cast<void *>(&param_py), 1, MPI_INT, 
+    //     MASTER_PROCESS, MPI_COMM_WORLD);
+    // MPI_Bcast(static_cast<void *>(&param_pz), 1, MPI_INT, 
+    //     MASTER_PROCESS, MPI_COMM_WORLD);
 
+    MPI_Bcast(shared_params, 4, MPI_INT, MASTER_PROCESS, MPI_COMM_WORLD);
+
+    param_px = shared_params[0];
+    param_py = shared_params[1];
+    param_pz = shared_params[2];
+    param_nt = shared_params[3];
+
+    omp_set_num_threads(param_nt);
     proc_x = rank % param_px;
     proc_y = (rank % (param_px * param_py)) / param_px;
     proc_z = rank / (param_px * param_py);
     printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
 
-    MPI_Bcast(static_cast<void *>(&param_nt), 1, MPI_INT, 
-        MASTER_PROCESS, MPI_COMM_WORLD);
-    omp_set_num_threads(param_nt);
+    // MPI_Bcast(static_cast<void *>(&param_nt), 1, MPI_INT, 
+    //     MASTER_PROCESS, MPI_COMM_WORLD);
 
     MPI_Finalize();
     exit(0);
