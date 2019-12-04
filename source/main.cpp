@@ -118,8 +118,8 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
-    // used for param_p(x|y|z) and param_nt send/receive
-    int shared_params[4];
+    // used for param_p(x|y|z), param_n(x|y|z) and param_nt send/receive
+    int shared_params[7];
 
     if (rank == MASTER_PROCESS) {
 
@@ -276,7 +276,10 @@ int main(int argc, char *argv[]) {
         shared_params[0] = param_px;
         shared_params[1] = param_py;
         shared_params[2] = param_pz;
-        shared_params[3] = param_nt;
+        shared_params[3] = param_nx;
+        shared_params[4] = param_ny;
+        shared_params[5] = param_nz;
+        shared_params[6] = param_nt;
 
         ellpack_matrix em;
         std::vector<double> b;
@@ -425,21 +428,21 @@ int main(int argc, char *argv[]) {
     // MPI_Bcast(static_cast<void *>(&param_pz), 1, MPI_INT, 
     //     MASTER_PROCESS, MPI_COMM_WORLD);
 
-    MPI_Bcast(shared_params, 4, MPI_INT, MASTER_PROCESS, MPI_COMM_WORLD);
+    MPI_Bcast(shared_params, 7, MPI_INT, MASTER_PROCESS, MPI_COMM_WORLD);
 
     param_px = shared_params[0];
     param_py = shared_params[1];
     param_pz = shared_params[2];
-    param_nt = shared_params[3];
+    param_nx = shared_params[3];
+    param_ny = shared_params[4];
+    param_nz = shared_params[5];
+    param_nt = shared_params[6];
 
     omp_set_num_threads(param_nt);
     proc_x = rank % param_px;
     proc_y = (rank % (param_px * param_py)) / param_px;
     proc_z = rank / (param_px * param_py);
     printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
-
-    // MPI_Bcast(static_cast<void *>(&param_nt), 1, MPI_INT, 
-    //     MASTER_PROCESS, MPI_COMM_WORLD);
 
     MPI_Finalize();
     exit(0);
