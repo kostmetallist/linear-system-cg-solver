@@ -42,6 +42,11 @@ typedef enum {
     AMBIGUOUS_PROCESS_NUMBER
 } errcode;
 
+typedef struct {
+    int _1;
+    int _2;
+} pair;
+
 
 bool validate_parameters() {
 
@@ -112,6 +117,21 @@ bool validate_parameters() {
     return is_valid;
 }
 
+// TODO: it's a stub now
+pair get_index_range(const int total_elem_number, const int rank, 
+    const int nproc) {
+
+    pair result;
+    result._1 = 0;
+    result._2 = total_elem_number-1;
+    // result._1 = total_elem_number/nproc + std::min(rank, 
+    //     total_elem_number/nproc);
+    // result._2 = (total_elem_number+1)/nproc + total_elem_number%nproc;
+
+    return result;
+}
+
+
 int main(int argc, char *argv[]) {
 
     MPI_Init(&argc, &argv);
@@ -120,6 +140,10 @@ int main(int argc, char *argv[]) {
 
     // used for param_p(x|y|z), param_n(x|y|z) and param_nt send/receive
     int shared_params[7];
+    // used for mapping `cell number` -> `process-holder`
+    int *part;
+    // used for mapping `local cell number` -> `global cell number`
+    int *l2g;
 
     if (rank == MASTER_PROCESS) {
 
@@ -443,6 +467,10 @@ int main(int argc, char *argv[]) {
     proc_y = (rank % (param_px * param_py)) / param_px;
     proc_z = rank / (param_px * param_py);
     printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
+
+    pair i_range = get_index_range(param_nx, proc_x, param_px);
+    pair j_range = get_index_range(param_ny, proc_y, param_py);
+    pair k_range = get_index_range(param_nz, proc_z, param_pz);
 
     MPI_Finalize();
     exit(0);
