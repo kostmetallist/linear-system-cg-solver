@@ -4,7 +4,7 @@
   <img src="img/sparse-matrix.png" alt="<icon here>" width="384"/>
 </p>
 
-Imlementation of linear system solver using Jacobi preconditioner. Using OpenMP for thread parallelizing and MPI for distributed version of solver.
+Implementation of linear system solver using Jacobi preconditioner. Using OpenMP for thread parallelizing and MPI for distributed version of solver.
 
 #### Compilation 
 
