@@ -468,9 +468,27 @@ int main(int argc, char *argv[]) {
     proc_z = rank / (param_px * param_py);
     printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
 
+    // *_range contains two indices by each axis representing start and 
+    // finish index (inclusively) of elements that current process can use
     pair i_range = get_index_range(param_nx, proc_x, param_px);
     pair j_range = get_index_range(param_ny, proc_y, param_py);
     pair k_range = get_index_range(param_nz, proc_z, param_pz);
+
+    const int cells_by_x = i_range._2-i_range._1+1;
+    const int cells_by_y = j_range._2-j_range._1+1;
+    const int cells_by_z = k_range._2-k_range._1+1;
+
+    const int internal_num = cells_by_x * cells_by_y * cells_by_z;
+    int halo_num = 0;
+
+    if (proc_x)              { halo_num += cells_by_y * cells_by_z; }
+    if (proc_x < param_px-1) { halo_num += cells_by_y * cells_by_z; }
+    if (proc_y)              { halo_num += cells_by_x * cells_by_z; }
+    if (proc_y < param_py-1) { halo_num += cells_by_x * cells_by_z; }
+    if (proc_z)              { halo_num += cells_by_x * cells_by_y; }
+    if (proc_z < param_pz-1) { halo_num += cells_by_x * cells_by_y; }
+
+    const int extended_num = internal_num + halo_num;
 
     MPI_Finalize();
     exit(0);
