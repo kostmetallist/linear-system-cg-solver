@@ -122,11 +122,10 @@ pair get_index_range(const int total_elem_number, const int rank,
     const int nproc) {
 
     pair result;
-    result._1 = 0;
-    result._2 = total_elem_number-1;
-    // result._1 = total_elem_number/nproc + std::min(rank, 
-    //     total_elem_number/nproc);
-    // result._2 = (total_elem_number+1)/nproc + total_elem_number%nproc;
+    result._1 = rank*(total_elem_number/nproc) + std::min(rank, 
+        total_elem_number%nproc);
+    result._2 = result._1 + total_elem_number/nproc + 
+        (rank<total_elem_number%nproc)? 1: 0;
 
     return result;
 }
