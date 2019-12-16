@@ -117,7 +117,6 @@ bool validate_parameters() {
     return is_valid;
 }
 
-// TODO: it's a stub now
 pair get_index_range(const int total_elem_number, const int rank, 
     const int nproc) {
 
@@ -488,7 +487,11 @@ int main(int argc, char *argv[]) {
     if (proc_z < param_pz-1) { halo_num += cells_by_x * cells_by_y; }
 
     const int extended_num = internal_num + halo_num;
+    part = new int[extended_num];
+    l2g  = new int[extended_num];
 
+    delete[] part;
+    delete[] l2g;
     MPI_Finalize();
     exit(0);
 }
