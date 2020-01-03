@@ -117,7 +117,6 @@ bool validate_parameters() {
     return is_valid;
 }
 
-// TODO: it's a stub now
 pair get_index_range(const int total_elem_number, const int rank, 
     const int nproc) {
 
@@ -125,7 +124,7 @@ pair get_index_range(const int total_elem_number, const int rank,
     result._1 = rank*(total_elem_number/nproc) + std::min(rank, 
         total_elem_number%nproc);
     result._2 = result._1 + total_elem_number/nproc + 
-        (rank<total_elem_number%nproc)? 1: 0;
+        ((rank<total_elem_number%nproc)? 1: 0);
 
     return result;
 }
@@ -465,10 +464,10 @@ int main(int argc, char *argv[]) {
     proc_x = rank % param_px;
     proc_y = (rank % (param_px * param_py)) / param_px;
     proc_z = rank / (param_px * param_py);
-    printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
+    // printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
 
     // *_range contains two indices by each axis representing start and 
-    // finish index (inclusively) of elements that current process can use
+    // finish index (inclusively) of elements that current process possess
     pair i_range = get_index_range(param_nx, proc_x, param_px);
     pair j_range = get_index_range(param_ny, proc_y, param_py);
     pair k_range = get_index_range(param_nz, proc_z, param_pz);
@@ -479,16 +478,107 @@ int main(int argc, char *argv[]) {
 
     const int internal_num = cells_by_x * cells_by_y * cells_by_z;
     int halo_num = 0;
+    // flags for indicating neighbour presence
+    bool down = false, left = false, back = false, 
+        front = false, right = false, up = false;
 
-    if (proc_x)              { halo_num += cells_by_y * cells_by_z; }
-    if (proc_x < param_px-1) { halo_num += cells_by_y * cells_by_z; }
-    if (proc_y)              { halo_num += cells_by_x * cells_by_z; }
-    if (proc_y < param_py-1) { halo_num += cells_by_x * cells_by_z; }
-    if (proc_z)              { halo_num += cells_by_x * cells_by_y; }
-    if (proc_z < param_pz-1) { halo_num += cells_by_x * cells_by_y; }
+    if (proc_z) {
+        halo_num += cells_by_x * cells_by_y;
+        down = true; 
+    }
+
+    if (proc_y) {
+        halo_num += cells_by_x * cells_by_z;
+        left = true; 
+    }
+
+    if (proc_x) {
+        halo_num += cells_by_y * cells_by_z;
+        back = true;
+    }
+
+    if (proc_x < param_px-1) {
+        halo_num += cells_by_y * cells_by_z;
+        front = true;
+    }
+
+    if (proc_y < param_py-1) {
+        halo_num += cells_by_x * cells_by_z;
+        right = true;
+    }
+
+    if (proc_z < param_pz-1) {
+        halo_num += cells_by_x * cells_by_y;
+        up = true;
+    }
 
     const int extended_num = internal_num + halo_num;
+    printf("extended for process #%d is %d\n", rank, extended_num);
+    part = new int[extended_num];
+    l2g  = new int[extended_num];
 
+    int idx = 0;
+    for (idx; idx < internal_num; ++idx) {
+        part[idx] = rank;
+    }
+
+    if (down) {
+        int neigh_rank = rank - param_px*param_py;
+        for (int i = 0; i < cells_by_x * cells_by_y; ++i) {
+           part[idx+i] = neigh_rank;
+        }
+        idx += cells_by_x * cells_by_y;
+    }
+
+    if (left) {
+        int neigh_rank = rank - param_px;
+        for (int i = 0; i < cells_by_x * cells_by_z; ++i) {
+           part[idx+i] = neigh_rank;
+        }
+        idx += cells_by_x * cells_by_z;
+    }
+
+    if (back) {
+        int neigh_rank = rank - 1;
+        for (int i = 0; i < cells_by_y * cells_by_z; ++i) {
+           part[idx+i] = neigh_rank;
+        }
+        idx += cells_by_y * cells_by_z;
+    }
+
+    if (front) {
+        int neigh_rank = rank + 1;
+        for (int i = 0; i < cells_by_y * cells_by_z; ++i) {
+           part[idx+i] = neigh_rank;
+        }
+        idx += cells_by_y * cells_by_z;
+    }
+
+    if (right) {
+        int neigh_rank = rank + param_px;
+        for (int i = 0; i < cells_by_x * cells_by_z; ++i) {
+           part[idx+i] = neigh_rank;
+        }
+        idx += cells_by_x * cells_by_z;
+    }
+
+    if (up) {
+        int neigh_rank = rank + param_px*param_py;
+        for (int i = 0; i < cells_by_x * cells_by_y; ++i) {
+           part[idx+i] = neigh_rank;
+        }
+        idx += cells_by_x * cells_by_y;
+    }
+
+    printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
+    // std::string part_representation = "";
+    // for (int i = 0; i < extended_num; ++i) {
+    //     part_representation += std::string(part[i]);
+    // }
+    // printf("process #%d part: %s\n", rank, part_representation.c_str());
+
+    delete[] part;
+    delete[] l2g;
     MPI_Finalize();
     exit(0);
 }
