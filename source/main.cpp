@@ -117,6 +117,7 @@ bool validate_parameters() {
     return is_valid;
 }
 
+// returns pair like [i_begin, i_end) -- the second index is exclusive
 pair get_index_range(const int total_elem_number, const int rank, 
     const int nproc) {
 
@@ -472,9 +473,9 @@ int main(int argc, char *argv[]) {
     pair j_range = get_index_range(param_ny, proc_y, param_py);
     pair k_range = get_index_range(param_nz, proc_z, param_pz);
 
-    const int cells_by_x = i_range._2-i_range._1+1;
-    const int cells_by_y = j_range._2-j_range._1+1;
-    const int cells_by_z = k_range._2-k_range._1+1;
+    const int cells_by_x = i_range._2-i_range._1;
+    const int cells_by_y = j_range._2-j_range._1;
+    const int cells_by_z = k_range._2-k_range._1;
 
     const int internal_num = cells_by_x * cells_by_y * cells_by_z;
     int halo_num = 0;
