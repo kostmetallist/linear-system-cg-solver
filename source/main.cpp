@@ -465,10 +465,9 @@ int main(int argc, char *argv[]) {
     proc_x = rank % param_px;
     proc_y = (rank % (param_px * param_py)) / param_px;
     proc_z = rank / (param_px * param_py);
-    // printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
 
-    // *_range contains two indices by each axis representing start and 
-    // finish index (inclusively) of elements that current process possess
+    // *_range contains two indices by each axis representing start (inc) and 
+    // finish (excl) index of elements that current process possess
     pair i_range = get_index_range(param_nx, proc_x, param_px);
     pair j_range = get_index_range(param_ny, proc_y, param_py);
     pair k_range = get_index_range(param_nz, proc_z, param_pz);
