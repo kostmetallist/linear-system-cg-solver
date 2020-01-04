@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
 #include <cmath>
 #include <stdlib.h>
 #include <stdio.h>
@@ -147,12 +148,12 @@ void fill_internal_gids(int *l2g, const pair i_range, const pair j_range,
 
 // TODO remove this in production
 std::string intarray2string(const int *arr, const int size) {
-    std::string output = "";
+    std::stringstream out;
     for (int i = 0; i < size; ++i) {
-        output += arr[i] + " ";
+        out << arr[i] << " ";
     }
 
-    return output;
+    return out.str();
 }
 
 
