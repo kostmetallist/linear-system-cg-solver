@@ -136,13 +136,23 @@ void fill_internal_gids(int *l2g, const pair i_range, const pair j_range,
 
     const int by_layer = param_nx * param_ny;
     int index = 0;
-    for (int i = i_range._1; i < i_range._2; ++i) {
+    for (int k = k_range._1; k < k_range._2; ++k) {
         for (int j = j_range._1; j < j_range._2; ++j) {
-            for (int k = k_range._1; j < k_range._2; ++k) {
+            for (int i = i_range._1; i < i_range._2; ++i) {
                 l2g[index++] = k*by_layer + j*param_nx + i;
             }
         }
     }
+}
+
+// TODO remove this in production
+std::string intarray2string(const int *arr, const int size) {
+    std::string output = "";
+    for (int i = 0; i < size; ++i) {
+        output += arr[i] + " ";
+    }
+
+    return output;
 }
 
 
@@ -525,6 +535,9 @@ int main(int argc, char *argv[]) {
     part = new int[extended_num];
     l2g  = new int[extended_num];
     fill_internal_gids(l2g, i_range, j_range, k_range, param_nx, param_ny);
+
+    printf("rank #%d, l2g: %s\n", rank, 
+        intarray2string(l2g, internal_num).c_str());
 
     int idx = 0;
     for (idx; idx < internal_num; ++idx) {
