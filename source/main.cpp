@@ -130,6 +130,21 @@ pair get_index_range(const int total_elem_number, const int rank,
     return result;
 }
 
+// "gids" is for "global ids of cells"
+void fill_internal_gids(int *l2g, const pair i_range, const pair j_range, 
+    const pair k_range, const int param_nx, const int param_ny) {
+
+    const int by_layer = param_nx * param_ny;
+    int index = 0;
+    for (int i = i_range._1; i < i_range._2; ++i) {
+        for (int j = j_range._1; j < j_range._2; ++j) {
+            for (int k = k_range._1; j < k_range._2; ++k) {
+                l2g[index++] = k*by_layer + j*param_nx + i;
+            }
+        }
+    }
+}
+
 
 int main(int argc, char *argv[]) {
 
@@ -444,13 +459,6 @@ int main(int argc, char *argv[]) {
         // std::cout << "Solver is finished in " << t*1000 << " ms" << std::endl;
     }
 
-    // MPI_Bcast(static_cast<void *>(&param_px), 1, MPI_INT, 
-    //     MASTER_PROCESS, MPI_COMM_WORLD);
-    // MPI_Bcast(static_cast<void *>(&param_py), 1, MPI_INT, 
-    //     MASTER_PROCESS, MPI_COMM_WORLD);
-    // MPI_Bcast(static_cast<void *>(&param_pz), 1, MPI_INT, 
-    //     MASTER_PROCESS, MPI_COMM_WORLD);
-
     MPI_Bcast(shared_params, 7, MPI_INT, MASTER_PROCESS, MPI_COMM_WORLD);
 
     param_px = shared_params[0];
@@ -516,6 +524,7 @@ int main(int argc, char *argv[]) {
     printf("extended for process #%d is %d\n", rank, extended_num);
     part = new int[extended_num];
     l2g  = new int[extended_num];
+    fill_internal_gids(l2g, i_range, j_range, k_range, param_nx, param_ny);
 
     int idx = 0;
     for (idx; idx < internal_num; ++idx) {
