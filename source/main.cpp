@@ -537,8 +537,8 @@ int main(int argc, char *argv[]) {
     l2g  = new int[extended_num];
     fill_internal_gids(l2g, i_range, j_range, k_range, param_nx, param_ny);
 
-    printf("rank #%d, l2g: %s\n", rank, 
-        intarray2string(l2g, internal_num).c_str());
+    // printf("rank #%d, l2g: %s\n", rank, 
+    //     intarray2string(l2g, internal_num).c_str());
 
     int idx = 0;
     for (idx; idx < internal_num; ++idx) {
@@ -548,7 +548,8 @@ int main(int argc, char *argv[]) {
     if (down) {
         int neigh_rank = rank - param_px*param_py;
         for (int i = 0; i < cells_by_x * cells_by_y; ++i) {
-           part[idx+i] = neigh_rank;
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[i] - param_nx*param_ny;
         }
         idx += cells_by_x * cells_by_y;
     }
@@ -556,7 +557,9 @@ int main(int argc, char *argv[]) {
     if (left) {
         int neigh_rank = rank - param_px;
         for (int i = 0; i < cells_by_x * cells_by_z; ++i) {
-           part[idx+i] = neigh_rank;
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[cells_by_x*cells_by_y*(i/cells_by_x) + 
+                i%cells_by_x] - param_nx;
         }
         idx += cells_by_x * cells_by_z;
     }
@@ -564,7 +567,8 @@ int main(int argc, char *argv[]) {
     if (back) {
         int neigh_rank = rank - 1;
         for (int i = 0; i < cells_by_y * cells_by_z; ++i) {
-           part[idx+i] = neigh_rank;
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[i*cells_by_x] - 1;
         }
         idx += cells_by_y * cells_by_z;
     }
@@ -572,7 +576,8 @@ int main(int argc, char *argv[]) {
     if (front) {
         int neigh_rank = rank + 1;
         for (int i = 0; i < cells_by_y * cells_by_z; ++i) {
-           part[idx+i] = neigh_rank;
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[i*cells_by_x] + cells_by_x;
         }
         idx += cells_by_y * cells_by_z;
     }
@@ -580,7 +585,9 @@ int main(int argc, char *argv[]) {
     if (right) {
         int neigh_rank = rank + param_px;
         for (int i = 0; i < cells_by_x * cells_by_z; ++i) {
-           part[idx+i] = neigh_rank;
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[cells_by_x*cells_by_y*(i/cells_by_x) + 
+                i%cells_by_x] + cells_by_y*param_nx;
         }
         idx += cells_by_x * cells_by_z;
     }
@@ -588,17 +595,17 @@ int main(int argc, char *argv[]) {
     if (up) {
         int neigh_rank = rank + param_px*param_py;
         for (int i = 0; i < cells_by_x * cells_by_y; ++i) {
-           part[idx+i] = neigh_rank;
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[i] + cells_by_z*(param_nx*param_ny);
         }
         idx += cells_by_x * cells_by_y;
     }
 
     printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
-    // std::string part_representation = "";
-    // for (int i = 0; i < extended_num; ++i) {
-    //     part_representation += std::string(part[i]);
-    // }
-    // printf("process #%d part: %s\n", rank, part_representation.c_str());
+    printf("process #%d part: %s\n", rank, 
+        intarray2string(part, extended_num).c_str());
+    printf("process #%d l2g: %s\n", rank, 
+        intarray2string(l2g, extended_num).c_str());
 
     delete[] part;
     delete[] l2g;
