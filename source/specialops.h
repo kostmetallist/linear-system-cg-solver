@@ -15,11 +15,6 @@ typedef struct {
     std::vector< std::vector<double> > data;
 } ellpack_matrix;
 
-// typedef struct {
-//     int _1;
-//     int _2;
-// } pair;
-
 
 namespace so {
 
@@ -51,7 +46,7 @@ namespace so {
     ellpack_matrix generate_diag_dominant_matrix(const int nx, const int ny, 
         const int nz);
 
-    template <class T> T *unrollVector(std::vector<T> vec);
+    template <class T> T *unroll_vector(std::vector<T> vec);
 }
 
 #endif
