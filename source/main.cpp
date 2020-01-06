@@ -170,6 +170,7 @@ int main(int argc, char *argv[]) {
     // used for mapping `local cell number` -> `global cell number`
     int *l2g;
 
+    // input values handling
     if (rank == MASTER_PROCESS) {
 
         int option_char = -1, 
@@ -287,7 +288,7 @@ int main(int argc, char *argv[]) {
                 "  int param_px = %d\n"
                 "  int param_py = %d\n"
                 "  int param_pz = %d\n"
-                "  double param_tol = %lf\n"
+                "  double param_tol = %.8lf\n"
                 "  int param_maxit = %d\n"
                 "  int param_nt = %d\n"
                 "  bool param_qa = %d\n",
@@ -330,138 +331,77 @@ int main(int argc, char *argv[]) {
         shared_params[5] = param_nz;
         shared_params[6] = param_nt;
 
-        ellpack_matrix em;
-        std::vector<double> b;
-        std::size_t N;
-
-        // generate data if input files haven't been specified correctly
-        if (param_matrix_filename.empty() or param_vector_filename.empty()) {
-
-            N = param_nx * param_ny * param_nz;
-            em = so::generate_diag_dominant_matrix(param_nx, 
-                param_ny, param_nz);
-            b.reserve(N);
-            for (std::size_t i = 0; i < N; ++i) {
-                b.push_back(std::cos(i));
-            }
-
-        } else {
-
-            em = so::read_ellpack_matrix(param_matrix_filename);
-            b = so::read_vector(param_vector_filename);
-            N = b.size();
-            if (DEBUG_INFO) {
-
-                plain_matrix pm = so::ellpack2plain(em, 4);
-                std::cout << "input matrix: " << std::endl;
-                for (std::size_t i = 0; i < pm.rows.size(); ++i) {
-                    for (std::size_t j = 0; j < pm.rows[i].size(); ++j) {
-                        std::cout << pm.rows[i][j] << " ";
-                    }
-                    std::cout << std::endl;
-                }
-
-                std::cout << "input vector: " << std::endl;
-                for (std::size_t j = 0; j < b.size(); ++j) {
-                    std::cout << b[j] << " " << std::endl;
-                }
-            }
-        }
-
         // time measurements storage value
-        double t;
+        // double t;
+
         // basic operations testing
         // executing three times each for minimizing randomness
-        if (param_qa) {
+        // if (param_qa) {
      
-            std::vector<double> x(N), y(N);
-            for (std::size_t i = 0; i < N; ++i) {
-                x[i] = std::cos(i*i);
-                y[i] = std::sin(i*i);
-            }
+        //     std::vector<double> x(N), y(N);
+        //     for (std::size_t i = 0; i < N; ++i) {
+        //         x[i] = std::cos(i*i);
+        //         y[i] = std::sin(i*i);
+        //     }
 
-            t = omp_get_wtime();
-            double dot_result = so::dot(x, y);
-                   dot_result = so::dot(x, y);
-                   dot_result = so::dot(x, y);
-            t = omp_get_wtime() - t;
-            std::cout << "Dot operation has been done in " << (t/3.0)*1000 << 
-                " ms" << std::endl;
-            double dot_test = 0;
+        //     t = omp_get_wtime();
+        //     double dot_result = so::dot(x, y);
+        //            dot_result = so::dot(x, y);
+        //            dot_result = so::dot(x, y);
+        //     t = omp_get_wtime() - t;
+        //     std::cout << "Dot operation has been done in " << (t/3.0)*1000 << 
+        //         " ms" << std::endl;
+        //     double dot_test = 0;
 
-            for (std::size_t i = 0; i < N; ++i) {
-                dot_test += x[i] * y[i];
-            }
+        //     for (std::size_t i = 0; i < N; ++i) {
+        //         dot_test += x[i] * y[i];
+        //     }
 
-            if (std::abs(dot_result - dot_test) > EPS) {
-                std::cerr << "--qa: dot assertion error: result (" << 
-                    dot_result << ") is much different from expected (" << 
-                    dot_test << ") value" << std::endl;
-            }
+        //     if (std::abs(dot_result - dot_test) > EPS) {
+        //         std::cerr << "--qa: dot assertion error: result (" << 
+        //             dot_result << ") is much different from expected (" << 
+        //             dot_test << ") value" << std::endl;
+        //     }
 
-            t = omp_get_wtime();
-            std::vector<double> axpby_result = so::axpby(x, 1.0, y, -1.0);
-                                axpby_result = so::axpby(x, 1.0, y, -1.0);
-                                axpby_result = so::axpby(x, 1.0, y, -1.0);
-            t = omp_get_wtime() - t;
-            std::cout << "Axpby operation has been done in " << (t/3.0)*1000 << 
-                " ms" << std::endl;
-            std::vector<double> axpby_test(N);
-            for (std::size_t i = 0; i < N; ++i) {
-                axpby_test[i] = x[i] - y[i];
-            }
+        //     t = omp_get_wtime();
+        //     std::vector<double> axpby_result = so::axpby(x, 1.0, y, -1.0);
+        //                         axpby_result = so::axpby(x, 1.0, y, -1.0);
+        //                         axpby_result = so::axpby(x, 1.0, y, -1.0);
+        //     t = omp_get_wtime() - t;
+        //     std::cout << "Axpby operation has been done in " << (t/3.0)*1000 << 
+        //         " ms" << std::endl;
+        //     std::vector<double> axpby_test(N);
+        //     for (std::size_t i = 0; i < N; ++i) {
+        //         axpby_test[i] = x[i] - y[i];
+        //     }
 
-            for (std::size_t i = 0; i < N; ++i) {
-                if (std::abs(axpby_result[i] - axpby_test[i]) > EPS) {
-                    std::cerr << "--qa: axpby assertion error: result in " << 
-                        i << "th position (" << axpby_result[i] << 
-                        ") is much different from expected (" << 
-                        axpby_test[i] << ")" << std::endl;
-                    break;
-                }
-            }
+        //     for (std::size_t i = 0; i < N; ++i) {
+        //         if (std::abs(axpby_result[i] - axpby_test[i]) > EPS) {
+        //             std::cerr << "--qa: axpby assertion error: result in " << 
+        //                 i << "th position (" << axpby_result[i] << 
+        //                 ") is much different from expected (" << 
+        //                 axpby_test[i] << ")" << std::endl;
+        //             break;
+        //         }
+        //     }
 
-            t = omp_get_wtime();
-            std::vector<double> spmv_result = so::spmv(em, x);
-                                spmv_result = so::spmv(em, x);
-                                spmv_result = so::spmv(em, x);
-            t = omp_get_wtime() - t;
-            std::cout << "Spmv operation has been done in " << (t/3.0)*1000 << 
-                " ms" << std::endl;
-            const std::vector<double> spmv_test = so::spmv_consecutive(em, x);
-            const double norm_result = 
-                std::sqrt(so::dot(spmv_result, spmv_result));
-            const double norm_test = std::sqrt(so::dot(spmv_test, spmv_test));
-            if (std::abs(norm_result - norm_test) > EPS) {
-                std::cerr << "--qa: spmv assertion error: result norm (" << 
-                    norm_result << ") is much different from expected norm (" << 
-                    norm_test << ") value" << std::endl;
-            }
-
-            // t = omp_get_wtime();
-            // std::vector<double> copy_test1(N);
-            // so::copy_vector(copy_test1, x);
-            // t = omp_get_wtime() - t;
-            // std::cout << "Parallel copy vector operation has been done in " << 
-            //     t*1000 << " ms" << std::endl; 
-
-            // t = omp_get_wtime();
-            // std::vector<double> copy_test2(N);
-            // copy_test2 = x;
-            // t = omp_get_wtime() - t;
-            // std::cout << "Ordinary copy vector operation has been done in " << 
-            //     t*1000 << " ms" << std::endl; 
-
-            // for (std::size_t i = 0; i < N; ++i) {
-            //     if (copy_test1[i] != copy_test2[i]) {
-            //         std::cerr << "--qa: copy assertion error: result in " << 
-            //             i << "th position of first vector (" << copy_test1[i] << 
-            //             ") is not equal to appropriate element of second "
-            //             "vector (" << axpby_test[i] << ")" << std::endl;
-            //         break;
-            //     }
-            // }
-        }
+        //     t = omp_get_wtime();
+        //     std::vector<double> spmv_result = so::spmv(em, x);
+        //                         spmv_result = so::spmv(em, x);
+        //                         spmv_result = so::spmv(em, x);
+        //     t = omp_get_wtime() - t;
+        //     std::cout << "Spmv operation has been done in " << (t/3.0)*1000 << 
+        //         " ms" << std::endl;
+        //     const std::vector<double> spmv_test = so::spmv_consecutive(em, x);
+        //     const double norm_result = 
+        //         std::sqrt(so::dot(spmv_result, spmv_result));
+        //     const double norm_test = std::sqrt(so::dot(spmv_test, spmv_test));
+        //     if (std::abs(norm_result - norm_test) > EPS) {
+        //         std::cerr << "--qa: spmv assertion error: result norm (" << 
+        //             norm_result << ") is much different from expected norm (" << 
+        //             norm_test << ") value" << std::endl;
+        //     }
+        // }
 
         // t = omp_get_wtime();
         // std::vector<double> solution = 
@@ -470,6 +410,7 @@ int main(int argc, char *argv[]) {
         // std::cout << "Solver is finished in " << t*1000 << " ms" << std::endl;
     }
 
+    // receiving entered values from MASTER
     MPI_Bcast(shared_params, 7, MPI_INT, MASTER_PROCESS, MPI_COMM_WORLD);
 
     param_px = shared_params[0];
@@ -532,14 +473,12 @@ int main(int argc, char *argv[]) {
     }
 
     const int extended_num = internal_num + halo_num;
-    printf("extended for process #%d is %d\n", rank, extended_num);
+    // printf("extended for process #%d is %d\n", rank, extended_num);
     part = new int[extended_num];
     l2g  = new int[extended_num];
+
+    // `part` and `l2g` filling activity
     fill_internal_gids(l2g, i_range, j_range, k_range, param_nx, param_ny);
-
-    // printf("rank #%d, l2g: %s\n", rank, 
-    //     intarray2string(l2g, internal_num).c_str());
-
     int idx = 0;
     for (idx; idx < internal_num; ++idx) {
         part[idx] = rank;
@@ -601,7 +540,32 @@ int main(int argc, char *argv[]) {
         idx += cells_by_x * cells_by_y;
     }
 
-    printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
+    // initial matrix retrieving (via generating or reading from file)
+    if (rank == MASTER_PROCESS) {
+
+        ellpack_matrix em;
+        std::vector<double> b;
+        std::size_t N;
+
+        // generate data if input files haven't been specified correctly
+        if (param_matrix_filename.empty() or param_vector_filename.empty()) {
+
+            N = param_nx * param_ny * param_nz;
+            em = so::generate_diag_dominant_matrix(param_nx, 
+                param_ny, param_nz);
+            b.reserve(N);
+            for (std::size_t i = 0; i < N; ++i) {
+                b.push_back(std::cos(i));
+            }
+
+        } else {
+
+            em = so::read_ellpack_matrix(param_matrix_filename);
+            b = so::read_vector(param_vector_filename);
+            N = b.size();
+        }
+    }
+
     printf("process #%d part: %s\n", rank, 
         intarray2string(part, extended_num).c_str());
     printf("process #%d l2g: %s\n", rank, 
