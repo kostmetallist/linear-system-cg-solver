@@ -337,7 +337,6 @@ int main(int argc, char *argv[]) {
         // basic operations testing
         // executing three times each for minimizing randomness
         // if (param_qa) {
-     
         //     std::vector<double> x(N), y(N);
         //     for (std::size_t i = 0; i < N; ++i) {
         //         x[i] = std::cos(i*i);
@@ -540,10 +539,9 @@ int main(int argc, char *argv[]) {
         idx += cells_by_x * cells_by_y;
     }
 
+    ellpack_matrix matrix;
     // initial matrix retrieving (via generating or reading from file)
     if (rank == MASTER_PROCESS) {
-
-        ellpack_matrix em;
         std::vector<double> b;
         std::size_t N;
 
@@ -551,7 +549,7 @@ int main(int argc, char *argv[]) {
         if (param_matrix_filename.empty() or param_vector_filename.empty()) {
 
             N = param_nx * param_ny * param_nz;
-            em = so::generate_diag_dominant_matrix(param_nx, 
+            matrix = so::generate_diag_dominant_matrix(param_nx, 
                 param_ny, param_nz);
             b.reserve(N);
             for (std::size_t i = 0; i < N; ++i) {
@@ -560,7 +558,7 @@ int main(int argc, char *argv[]) {
 
         } else {
 
-            em = so::read_ellpack_matrix(param_matrix_filename);
+            matrix = so::read_ellpack_matrix(param_matrix_filename);
             b = so::read_vector(param_vector_filename);
             N = b.size();
         }
@@ -570,6 +568,29 @@ int main(int argc, char *argv[]) {
         intarray2string(part, extended_num).c_str());
     printf("process #%d l2g: %s\n", rank, 
         intarray2string(l2g, extended_num).c_str());
+
+    // input matrix cells claim 
+    MPI_Request matrix_req;
+    MPI_Isend(l2g, internal_num, MPI_INT, 0, rank, MPI_COMM_WORLD, &matrix_req);
+    if (rank == MASTER_PROCESS) {
+        for (int i = 0; i < nproc; ++i) {
+
+            MPI_Status stat;
+            MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &stat);
+
+            int process = stat.MPI_SOURCE;
+            int buf_size;
+            MPI_Get_count(&stat, MPI_INT, &buf_size);
+            int *claimed_numbers = new int[buf_size];
+            MPI_Recv(claimed_numbers, buf_size, MPI_INT, process, 0, 
+                MPI_COMM_WORLD, &stat);
+
+            for (int j = 0; j < buf_size; ++j) {
+                
+            }
+            delete[] claimed_numbers;
+        }
+    }
 
     delete[] part;
     delete[] l2g;
