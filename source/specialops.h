@@ -15,10 +15,10 @@ typedef struct {
     std::vector< std::vector<double> > data;
 } ellpack_matrix;
 
-typedef struct {
-    int _1;
-    int _2;
-} pair;
+// typedef struct {
+//     int _1;
+//     int _2;
+// } pair;
 
 
 namespace so {

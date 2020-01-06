@@ -114,27 +114,28 @@ bool validate_parameters() {
 }
 
 // returns pair like [i_begin, i_end) -- the second index is exclusive
-pair get_index_range(const int total_elem_number, const int rank, 
-    const int nproc) {
+std::pair<int, int> get_index_range(const int total_elem_number, 
+    const int rank, const int nproc) {
 
-    pair result;
-    result._1 = rank*(total_elem_number/nproc) + std::min(rank, 
+    std::pair<int, int> result;
+    result.first = rank*(total_elem_number/nproc) + std::min(rank, 
         total_elem_number%nproc);
-    result._2 = result._1 + total_elem_number/nproc + 
+    result.first = result.first + total_elem_number/nproc + 
         ((rank<total_elem_number%nproc)? 1: 0);
 
     return result;
 }
 
 // "gids" is for "global ids of cells"
-void fill_internal_gids(int *l2g, const pair i_range, const pair j_range, 
-    const pair k_range, const int param_nx, const int param_ny) {
+void fill_internal_gids(int *l2g, const std::pair<int, int> i_range, 
+    const std::pair<int, int> j_range, const std::pair<int, int> k_range, 
+    const int param_nx, const int param_ny) {
 
     const int by_layer = param_nx * param_ny;
     int index = 0;
-    for (int k = k_range._1; k < k_range._2; ++k) {
-        for (int j = j_range._1; j < j_range._2; ++j) {
-            for (int i = i_range._1; i < i_range._2; ++i) {
+    for (int k = k_range.first; k < k_range.second; ++k) {
+        for (int j = j_range.first; j < j_range.second; ++j) {
+            for (int i = i_range.first; i < i_range.second; ++i) {
                 l2g[index++] = k*by_layer + j*param_nx + i;
             }
         }
@@ -422,13 +423,13 @@ int main(int argc, char *argv[]) {
 
     // *_range contains two indices by each axis representing start (inc) and 
     // finish (excl) index of elements that current process possess
-    pair i_range = get_index_range(param_nx, proc_x, param_px);
-    pair j_range = get_index_range(param_ny, proc_y, param_py);
-    pair k_range = get_index_range(param_nz, proc_z, param_pz);
+    std::pair<int, int> i_range = get_index_range(param_nx, proc_x, param_px);
+    std::pair<int, int> j_range = get_index_range(param_ny, proc_y, param_py);
+    std::pair<int, int> k_range = get_index_range(param_nz, proc_z, param_pz);
 
-    const int cells_by_x = i_range._2-i_range._1;
-    const int cells_by_y = j_range._2-j_range._1;
-    const int cells_by_z = k_range._2-k_range._1;
+    const int cells_by_x = i_range.second-i_range.first;
+    const int cells_by_y = j_range.second-j_range.first;
+    const int cells_by_z = k_range.second-k_range.first;
 
     const int internal_num = cells_by_x * cells_by_y * cells_by_z;
     int halo_num = 0;
