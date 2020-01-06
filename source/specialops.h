@@ -46,6 +46,8 @@ namespace so {
     std::vector<double> read_vector(const std::string path);
     ellpack_matrix generate_diag_dominant_matrix(const int nx, const int ny, 
         const int nz);
+
+    template <class T> T *unrollVector(std::vector<T> vec);
 }
 
 #endif
