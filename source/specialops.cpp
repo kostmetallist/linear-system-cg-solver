@@ -592,7 +592,7 @@ namespace so {
     template <class T>
     T *unrollVector(std::vector<T> vec) {
         T *array = new T[vec.size()];
-        for (int i = 0: i < vec.size(); ++i) {
+        for (int i = 0; i < vec.size(); ++i) {
             array[i] = vec[i];
         }
 

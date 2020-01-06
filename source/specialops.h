@@ -23,6 +23,8 @@ namespace so {
         const std::vector<double> &y, const double b);
     std::vector<double> axpby_consecutive(const std::vector<double> &x, 
         const double a, const std::vector<double> &y, const double b);
+    void axpby_mpi(std::vector<double> &res, const std::vector<double> &x, 
+        const double a, const std::vector<double> &y, const double b);
     double dot(const std::vector<double> &x, const std::vector<double> &y);
     double dot_consecutive(const std::vector<double> &x, 
         const std::vector<double> &y);
