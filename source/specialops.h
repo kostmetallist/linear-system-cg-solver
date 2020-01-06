@@ -19,8 +19,6 @@ typedef struct
 
 namespace so {
 
-    void copy_vector(std::vector<double> &to, const std::vector<double> &from);
-
     std::vector<double> axpby(const std::vector<double> &x, const double a, 
         const std::vector<double> &y, const double b);
     std::vector<double> axpby_consecutive(const std::vector<double> &x, 

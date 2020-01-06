@@ -8,8 +8,6 @@
 #include <string>
 #include <cmath>
 
-#define  CUSTOM_COPY 0
-
 namespace so {
 
     std::vector<double> axpby(const std::vector<double> &x, const double a, 
