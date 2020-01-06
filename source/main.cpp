@@ -43,11 +43,6 @@ typedef enum {
     AMBIGUOUS_PROCESS_NUMBER
 } errcode;
 
-typedef struct {
-    int _1;
-    int _2;
-} pair;
-
 
 bool validate_parameters() {
 
@@ -586,7 +581,7 @@ int main(int argc, char *argv[]) {
                 MPI_COMM_WORLD, &stat);
 
             for (int j = 0; j < buf_size; ++j) {
-                
+
             }
             delete[] claimed_numbers;
         }

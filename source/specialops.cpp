@@ -588,7 +588,7 @@ namespace so {
         return result;
     }
 
-    // ATTENTION: memory should be cleaned afterwards
+    // ATTENTION: memory should be delete'd afterwards
     template <class T>
     T *unrollVector(std::vector<T> vec) {
         T *array = new T[vec.size()];
