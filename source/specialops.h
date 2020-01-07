@@ -46,7 +46,10 @@ namespace so {
     ellpack_matrix generate_diag_dominant_matrix(const int nx, const int ny, 
         const int nz);
 
-    template <class T> T *unroll_vector(std::vector<T> vec);
+    template <class T> std::vector<T> unroll_matrix_rows(
+        const std::vector< std::vector<T> > &mat, 
+        const int *claimed_rows, 
+        const int claimed_num);
 }
 
 #endif
