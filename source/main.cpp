@@ -31,6 +31,8 @@ std::string param_vector_filename = "";
 
 const bool DEBUG_INFO = true;
 const int  MASTER_PROCESS = 0;
+const int  IDXS_TAG = 1;
+const int  DATA_TAG = 2;
 // total number of processes involved
 int nproc, 
 // process id
@@ -565,9 +567,24 @@ int main(int argc, char *argv[]) {
     printf("process #%d l2g: %s\n", rank, 
         intarray2string(l2g, extended_num).c_str());
 
-    // input matrix cells claim 
-    MPI_Request matrix_req;
+    ellpack_matrix local_data;
+    // seven elements corresponds to max number of neighbors for cell 
+    // (including itself)in 3-d space 
+    const char SEVEN = 7;
+    local_data.idxs = std::vector< std::vector<int> >(internal_num, 
+        std::vector<int>(SEVEN));
+    local_data.data = std::vector< std::vector<double> >(internal_num, 
+        std::vector<double>(SEVEN));
+
+    int *idxs_storage = new int[internal_num*SEVEN];
+    double *data_storage = new double[internal_num*SEVEN];
+    MPI_Request matrix_req, idxs_req, data_req;
     MPI_Isend(l2g, internal_num, MPI_INT, 0, rank, MPI_COMM_WORLD, &matrix_req);
+    MPI_Irecv(idxs_storage, internal_num*SEVEN, MPI_INT, MASTER_PROCESS, 
+        IDXS_TAG, MPI_COMM_WORLD, &idxs_req);
+    MPI_Irecv(data_storage, internal_num*SEVEN, MPI_DOUBLE, MASTER_PROCESS, 
+        DATA_TAG, MPI_COMM_WORLD, &data_req);
+
     if (rank == MASTER_PROCESS) {
         for (int i = 0; i < nproc; ++i) {
 
@@ -581,12 +598,18 @@ int main(int argc, char *argv[]) {
             MPI_Recv(claimed_numbers, buf_size, MPI_INT, process, 0, 
                 MPI_COMM_WORLD, &stat);
 
-            for (int j = 0; j < buf_size; ++j) {
+            for (int row_idx = 0; row_idx < buf_size; ++row_idx) {
 
             }
+
+            // MPI_Send();
+            // MPI_Send();
             delete[] claimed_numbers;
         }
     }
+
+    delete[] idxs_storage;
+    delete[] data_storage;
 
     delete[] part;
     delete[] l2g;
