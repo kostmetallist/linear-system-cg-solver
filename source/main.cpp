@@ -594,9 +594,12 @@ int main(int argc, char *argv[]) {
 
             int process = stat.MPI_SOURCE;
             int buf_size;
+
+            printf("processing claimer #%d\n", process);
             MPI_Get_count(&stat, MPI_INT, &buf_size);
             int *claimed_rows = new int[buf_size];
-            MPI_Recv(claimed_rows, buf_size, MPI_INT, process, 0, 
+            printf("reserved %d rows\n", buf_size);
+            MPI_Recv(claimed_rows, buf_size, MPI_INT, process, process, 
                 MPI_COMM_WORLD, &stat);
             std::vector<int> idxs_to_send = 
                 so::unroll_matrix_rows(matrix.idxs, claimed_rows, buf_size);
@@ -608,6 +611,8 @@ int main(int argc, char *argv[]) {
             MPI_Send(&data_to_send[0], buf_size, MPI_DOUBLE, process, 
                 DATA_TAG, MPI_COMM_WORLD);
             delete[] claimed_rows;
+
+            printf("done with claimer #%d\n", process);
         }
 
         // cleaning out all global matrix data
