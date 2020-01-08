@@ -537,6 +537,7 @@ int main(int argc, char *argv[]) {
         idx += cells_by_x * cells_by_y;
     }
 
+    // `matrix` will be filled only in the MASTER, for others it's just a stub
     ellpack_matrix matrix;
     // initial matrix retrieving (via generating or reading from file)
     if (rank == MASTER_PROCESS) {
@@ -594,17 +595,31 @@ int main(int argc, char *argv[]) {
             int process = stat.MPI_SOURCE;
             int buf_size;
             MPI_Get_count(&stat, MPI_INT, &buf_size);
-            int *claimed_numbers = new int[buf_size];
-            MPI_Recv(claimed_numbers, buf_size, MPI_INT, process, 0, 
+            int *claimed_rows = new int[buf_size];
+            MPI_Recv(claimed_rows, buf_size, MPI_INT, process, 0, 
                 MPI_COMM_WORLD, &stat);
+            std::vector<int> idxs_to_send = 
+                so::unroll_matrix_rows(matrix.idxs, claimed_rows, buf_size);
+            std::vector<double> data_to_send = 
+                so::unroll_matrix_rows(matrix.data, claimed_rows, buf_size);
 
-            for (int row_idx = 0; row_idx < buf_size; ++row_idx) {
+            MPI_Send(&idxs_to_send[0], buf_size, MPI_INT, process, 
+                IDXS_TAG, MPI_COMM_WORLD);
+            MPI_Send(&data_to_send[0], buf_size, MPI_DOUBLE, process, 
+                DATA_TAG, MPI_COMM_WORLD);
+            delete[] claimed_rows;
+        }
 
-            }
+        // TODO clean matrix
+    }
 
-            // MPI_Send();
-            // MPI_Send();
-            delete[] claimed_numbers;
+    MPI_Status stat;
+    MPI_Wait(&idxs_req, &stat);
+    MPI_Wait(&data_req, &stat);
+    for (int i = 0; i < internal_num; ++i) {
+        for (int j = 0; j < SEVEN; ++j) {
+            local_data.idxs[i][j] = idxs_storage[i*SEVEN + j];
+            local_data.data[i][j] = data_storage[i*SEVEN + j];
         }
     }
 

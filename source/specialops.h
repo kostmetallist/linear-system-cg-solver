@@ -1,5 +1,6 @@
 #ifndef SPECIALOPS_H
 #define SPECIALOPS_H
+#include <iostream>
 #include <vector>
 #include <string>
 
@@ -46,10 +47,31 @@ namespace so {
     ellpack_matrix generate_diag_dominant_matrix(const int nx, const int ny, 
         const int nz);
 
-    template <class T> std::vector<T> unroll_matrix_rows(
-        const std::vector< std::vector<T> > &mat, 
-        const int *claimed_rows, 
-        const int claimed_num);
+    template <class T> 
+    std::vector<T> unroll_matrix_rows( const std::vector< std::vector<T> > &mat, 
+        const int *claimed_rows, const int claimed_num) {
+
+        if (mat.empty()) {
+            std::cerr << "unroll_matrix: empty matrix given" << std::endl;
+            return std::vector<T>();
+        }
+
+        // assuming all nested vectors have the same length
+        const int W = mat[0].size();
+        const int H = mat.size();
+        std::vector<T> linear = std::vector<T>(W*claimed_num);
+        int claimed_idx = 0;
+        for (int i = 0; i < H and claimed_idx < claimed_num; ++i) {
+            if (i == claimed_rows[claimed_idx]) {
+                for (int j = 0; j < W; ++j) {
+                    linear[claimed_idx*W+j] = mat[i][j];
+                }
+                claimed_idx++;
+            }
+        }
+
+        return linear;
+    };
 }
 
 #endif
