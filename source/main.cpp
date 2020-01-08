@@ -122,7 +122,7 @@ std::pair<int, int> get_index_range(const int total_elem_number,
     std::pair<int, int> result;
     result.first = rank*(total_elem_number/nproc) + std::min(rank, 
         total_elem_number%nproc);
-    result.first = result.first + total_elem_number/nproc + 
+    result.second = result.first + total_elem_number/nproc + 
         ((rank<total_elem_number%nproc)? 1: 0);
 
     return result;
