@@ -610,7 +610,15 @@ int main(int argc, char *argv[]) {
             delete[] claimed_rows;
         }
 
-        // TODO clean matrix
+        // cleaning out all global matrix data
+        const int row_number = matrix.idxs.size();
+        for (int i = 0; i < row_number; ++i) {
+            matrix.idxs[i].clear();
+            matrix.data[i].clear();
+        }
+
+        matrix.idxs.clear();
+        matrix.data.clear();
     }
 
     MPI_Status stat;
