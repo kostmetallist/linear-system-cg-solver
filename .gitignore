@@ -1,4 +1,5 @@
 solver
 doc/connection-cmds.txt
+doc/connection_cmds.txt
 source/*.gch
 build/*

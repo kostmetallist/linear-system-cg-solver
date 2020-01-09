@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
 #include <cmath>
 #include <stdlib.h>
 #include <stdio.h>
@@ -30,6 +31,8 @@ std::string param_vector_filename = "";
 
 const bool DEBUG_INFO = true;
 const int  MASTER_PROCESS = 0;
+const int  IDXS_TAG = 1;
+const int  DATA_TAG = 2;
 // total number of processes involved
 int nproc, 
 // process id
@@ -41,11 +44,6 @@ typedef enum {
     INVALID_PARAMETERS = 1,
     AMBIGUOUS_PROCESS_NUMBER
 } errcode;
-
-typedef struct {
-    int _1;
-    int _2;
-} pair;
 
 
 bool validate_parameters() {
@@ -117,16 +115,43 @@ bool validate_parameters() {
     return is_valid;
 }
 
-pair get_index_range(const int total_elem_number, const int rank, 
-    const int nproc) {
+// returns pair like [i_begin, i_end) -- the second index is exclusive
+std::pair<int, int> get_index_range(const int total_elem_number, 
+    const int rank, const int nproc) {
 
-    pair result;
-    result._1 = rank*(total_elem_number/nproc) + std::min(rank, 
+    std::pair<int, int> result;
+    result.first = rank*(total_elem_number/nproc) + std::min(rank, 
         total_elem_number%nproc);
-    result._2 = result._1 + total_elem_number/nproc + 
-        (rank<total_elem_number%nproc)? 1: 0;
+    result.second = result.first + total_elem_number/nproc + 
+        ((rank<total_elem_number%nproc)? 1: 0);
 
     return result;
+}
+
+// "gids" is for "global ids of cells"
+void fill_internal_gids(int *l2g, const std::pair<int, int> i_range, 
+    const std::pair<int, int> j_range, const std::pair<int, int> k_range, 
+    const int param_nx, const int param_ny) {
+
+    const int by_layer = param_nx * param_ny;
+    int index = 0;
+    for (int k = k_range.first; k < k_range.second; ++k) {
+        for (int j = j_range.first; j < j_range.second; ++j) {
+            for (int i = i_range.first; i < i_range.second; ++i) {
+                l2g[index++] = k*by_layer + j*param_nx + i;
+            }
+        }
+    }
+}
+
+// TODO remove this in production
+std::string intarray2string(const int *arr, const int size) {
+    std::stringstream out;
+    for (int i = 0; i < size; ++i) {
+        out << arr[i] << " ";
+    }
+
+    return out.str();
 }
 
 
@@ -143,6 +168,7 @@ int main(int argc, char *argv[]) {
     // used for mapping `local cell number` -> `global cell number`
     int *l2g;
 
+    // input values handling
     if (rank == MASTER_PROCESS) {
 
         int option_char = -1, 
@@ -260,7 +286,7 @@ int main(int argc, char *argv[]) {
                 "  int param_px = %d\n"
                 "  int param_py = %d\n"
                 "  int param_pz = %d\n"
-                "  double param_tol = %lf\n"
+                "  double param_tol = %.8lf\n"
                 "  int param_maxit = %d\n"
                 "  int param_nt = %d\n"
                 "  bool param_qa = %d\n",
@@ -303,138 +329,76 @@ int main(int argc, char *argv[]) {
         shared_params[5] = param_nz;
         shared_params[6] = param_nt;
 
-        ellpack_matrix em;
-        std::vector<double> b;
-        std::size_t N;
-
-        // generate data if input files haven't been specified correctly
-        if (param_matrix_filename.empty() or param_vector_filename.empty()) {
-
-            N = param_nx * param_ny * param_nz;
-            em = so::generate_diag_dominant_matrix(param_nx, 
-                param_ny, param_nz);
-            b.reserve(N);
-            for (std::size_t i = 0; i < N; ++i) {
-                b.push_back(std::cos(i));
-            }
-
-        } else {
-
-            em = so::read_ellpack_matrix(param_matrix_filename);
-            b = so::read_vector(param_vector_filename);
-            N = b.size();
-            if (DEBUG_INFO) {
-
-                plain_matrix pm = so::ellpack2plain(em, 4);
-                std::cout << "input matrix: " << std::endl;
-                for (std::size_t i = 0; i < pm.rows.size(); ++i) {
-                    for (std::size_t j = 0; j < pm.rows[i].size(); ++j) {
-                        std::cout << pm.rows[i][j] << " ";
-                    }
-                    std::cout << std::endl;
-                }
-
-                std::cout << "input vector: " << std::endl;
-                for (std::size_t j = 0; j < b.size(); ++j) {
-                    std::cout << b[j] << " " << std::endl;
-                }
-            }
-        }
-
         // time measurements storage value
-        double t;
+        // double t;
+
         // basic operations testing
         // executing three times each for minimizing randomness
-        if (param_qa) {
-     
-            std::vector<double> x(N), y(N);
-            for (std::size_t i = 0; i < N; ++i) {
-                x[i] = std::cos(i*i);
-                y[i] = std::sin(i*i);
-            }
+        // if (param_qa) {
+        //     std::vector<double> x(N), y(N);
+        //     for (std::size_t i = 0; i < N; ++i) {
+        //         x[i] = std::cos(i*i);
+        //         y[i] = std::sin(i*i);
+        //     }
 
-            t = omp_get_wtime();
-            double dot_result = so::dot(x, y);
-                   dot_result = so::dot(x, y);
-                   dot_result = so::dot(x, y);
-            t = omp_get_wtime() - t;
-            std::cout << "Dot operation has been done in " << (t/3.0)*1000 << 
-                " ms" << std::endl;
-            double dot_test = 0;
+        //     t = omp_get_wtime();
+        //     double dot_result = so::dot(x, y);
+        //            dot_result = so::dot(x, y);
+        //            dot_result = so::dot(x, y);
+        //     t = omp_get_wtime() - t;
+        //     std::cout << "Dot operation has been done in " << (t/3.0)*1000 << 
+        //         " ms" << std::endl;
+        //     double dot_test = 0;
 
-            for (std::size_t i = 0; i < N; ++i) {
-                dot_test += x[i] * y[i];
-            }
+        //     for (std::size_t i = 0; i < N; ++i) {
+        //         dot_test += x[i] * y[i];
+        //     }
 
-            if (std::abs(dot_result - dot_test) > EPS) {
-                std::cerr << "--qa: dot assertion error: result (" << 
-                    dot_result << ") is much different from expected (" << 
-                    dot_test << ") value" << std::endl;
-            }
+        //     if (std::abs(dot_result - dot_test) > EPS) {
+        //         std::cerr << "--qa: dot assertion error: result (" << 
+        //             dot_result << ") is much different from expected (" << 
+        //             dot_test << ") value" << std::endl;
+        //     }
 
-            t = omp_get_wtime();
-            std::vector<double> axpby_result = so::axpby(x, 1.0, y, -1.0);
-                                axpby_result = so::axpby(x, 1.0, y, -1.0);
-                                axpby_result = so::axpby(x, 1.0, y, -1.0);
-            t = omp_get_wtime() - t;
-            std::cout << "Axpby operation has been done in " << (t/3.0)*1000 << 
-                " ms" << std::endl;
-            std::vector<double> axpby_test(N);
-            for (std::size_t i = 0; i < N; ++i) {
-                axpby_test[i] = x[i] - y[i];
-            }
+        //     t = omp_get_wtime();
+        //     std::vector<double> axpby_result = so::axpby(x, 1.0, y, -1.0);
+        //                         axpby_result = so::axpby(x, 1.0, y, -1.0);
+        //                         axpby_result = so::axpby(x, 1.0, y, -1.0);
+        //     t = omp_get_wtime() - t;
+        //     std::cout << "Axpby operation has been done in " << (t/3.0)*1000 << 
+        //         " ms" << std::endl;
+        //     std::vector<double> axpby_test(N);
+        //     for (std::size_t i = 0; i < N; ++i) {
+        //         axpby_test[i] = x[i] - y[i];
+        //     }
 
-            for (std::size_t i = 0; i < N; ++i) {
-                if (std::abs(axpby_result[i] - axpby_test[i]) > EPS) {
-                    std::cerr << "--qa: axpby assertion error: result in " << 
-                        i << "th position (" << axpby_result[i] << 
-                        ") is much different from expected (" << 
-                        axpby_test[i] << ")" << std::endl;
-                    break;
-                }
-            }
+        //     for (std::size_t i = 0; i < N; ++i) {
+        //         if (std::abs(axpby_result[i] - axpby_test[i]) > EPS) {
+        //             std::cerr << "--qa: axpby assertion error: result in " << 
+        //                 i << "th position (" << axpby_result[i] << 
+        //                 ") is much different from expected (" << 
+        //                 axpby_test[i] << ")" << std::endl;
+        //             break;
+        //         }
+        //     }
 
-            t = omp_get_wtime();
-            std::vector<double> spmv_result = so::spmv(em, x);
-                                spmv_result = so::spmv(em, x);
-                                spmv_result = so::spmv(em, x);
-            t = omp_get_wtime() - t;
-            std::cout << "Spmv operation has been done in " << (t/3.0)*1000 << 
-                " ms" << std::endl;
-            const std::vector<double> spmv_test = so::spmv_consecutive(em, x);
-            const double norm_result = 
-                std::sqrt(so::dot(spmv_result, spmv_result));
-            const double norm_test = std::sqrt(so::dot(spmv_test, spmv_test));
-            if (std::abs(norm_result - norm_test) > EPS) {
-                std::cerr << "--qa: spmv assertion error: result norm (" << 
-                    norm_result << ") is much different from expected norm (" << 
-                    norm_test << ") value" << std::endl;
-            }
-
-            // t = omp_get_wtime();
-            // std::vector<double> copy_test1(N);
-            // so::copy_vector(copy_test1, x);
-            // t = omp_get_wtime() - t;
-            // std::cout << "Parallel copy vector operation has been done in " << 
-            //     t*1000 << " ms" << std::endl; 
-
-            // t = omp_get_wtime();
-            // std::vector<double> copy_test2(N);
-            // copy_test2 = x;
-            // t = omp_get_wtime() - t;
-            // std::cout << "Ordinary copy vector operation has been done in " << 
-            //     t*1000 << " ms" << std::endl; 
-
-            // for (std::size_t i = 0; i < N; ++i) {
-            //     if (copy_test1[i] != copy_test2[i]) {
-            //         std::cerr << "--qa: copy assertion error: result in " << 
-            //             i << "th position of first vector (" << copy_test1[i] << 
-            //             ") is not equal to appropriate element of second "
-            //             "vector (" << axpby_test[i] << ")" << std::endl;
-            //         break;
-            //     }
-            // }
-        }
+        //     t = omp_get_wtime();
+        //     std::vector<double> spmv_result = so::spmv(em, x);
+        //                         spmv_result = so::spmv(em, x);
+        //                         spmv_result = so::spmv(em, x);
+        //     t = omp_get_wtime() - t;
+        //     std::cout << "Spmv operation has been done in " << (t/3.0)*1000 << 
+        //         " ms" << std::endl;
+        //     const std::vector<double> spmv_test = so::spmv_consecutive(em, x);
+        //     const double norm_result = 
+        //         std::sqrt(so::dot(spmv_result, spmv_result));
+        //     const double norm_test = std::sqrt(so::dot(spmv_test, spmv_test));
+        //     if (std::abs(norm_result - norm_test) > EPS) {
+        //         std::cerr << "--qa: spmv assertion error: result norm (" << 
+        //             norm_result << ") is much different from expected norm (" << 
+        //             norm_test << ") value" << std::endl;
+        //     }
+        // }
 
         // t = omp_get_wtime();
         // std::vector<double> solution = 
@@ -443,13 +407,7 @@ int main(int argc, char *argv[]) {
         // std::cout << "Solver is finished in " << t*1000 << " ms" << std::endl;
     }
 
-    // MPI_Bcast(static_cast<void *>(&param_px), 1, MPI_INT, 
-    //     MASTER_PROCESS, MPI_COMM_WORLD);
-    // MPI_Bcast(static_cast<void *>(&param_py), 1, MPI_INT, 
-    //     MASTER_PROCESS, MPI_COMM_WORLD);
-    // MPI_Bcast(static_cast<void *>(&param_pz), 1, MPI_INT, 
-    //     MASTER_PROCESS, MPI_COMM_WORLD);
-
+    // receiving entered values from MASTER
     MPI_Bcast(shared_params, 7, MPI_INT, MASTER_PROCESS, MPI_COMM_WORLD);
 
     param_px = shared_params[0];
@@ -464,31 +422,216 @@ int main(int argc, char *argv[]) {
     proc_x = rank % param_px;
     proc_y = (rank % (param_px * param_py)) / param_px;
     proc_z = rank / (param_px * param_py);
-    printf("process #%d (%d,%d,%d)\n", rank, proc_x, proc_y, proc_z);
 
-    // *_range contains two indices by each axis representing start and 
-    // finish index (inclusively) of elements that current process can use
-    pair i_range = get_index_range(param_nx, proc_x, param_px);
-    pair j_range = get_index_range(param_ny, proc_y, param_py);
-    pair k_range = get_index_range(param_nz, proc_z, param_pz);
+    // *_range contains two indices by each axis representing start (inc) and 
+    // finish (excl) index of elements that current process possess
+    std::pair<int, int> i_range = get_index_range(param_nx, proc_x, param_px);
+    std::pair<int, int> j_range = get_index_range(param_ny, proc_y, param_py);
+    std::pair<int, int> k_range = get_index_range(param_nz, proc_z, param_pz);
 
-    const int cells_by_x = i_range._2-i_range._1+1;
-    const int cells_by_y = j_range._2-j_range._1+1;
-    const int cells_by_z = k_range._2-k_range._1+1;
+    const int cells_by_x = i_range.second-i_range.first;
+    const int cells_by_y = j_range.second-j_range.first;
+    const int cells_by_z = k_range.second-k_range.first;
 
     const int internal_num = cells_by_x * cells_by_y * cells_by_z;
     int halo_num = 0;
+    // flags for indicating neighbour presence
+    bool down = false, left = false, back = false, 
+        front = false, right = false, up = false;
 
-    if (proc_x)              { halo_num += cells_by_y * cells_by_z; }
-    if (proc_x < param_px-1) { halo_num += cells_by_y * cells_by_z; }
-    if (proc_y)              { halo_num += cells_by_x * cells_by_z; }
-    if (proc_y < param_py-1) { halo_num += cells_by_x * cells_by_z; }
-    if (proc_z)              { halo_num += cells_by_x * cells_by_y; }
-    if (proc_z < param_pz-1) { halo_num += cells_by_x * cells_by_y; }
+    if (proc_z) {
+        halo_num += cells_by_x * cells_by_y;
+        down = true; 
+    }
+
+    if (proc_y) {
+        halo_num += cells_by_x * cells_by_z;
+        left = true; 
+    }
+
+    if (proc_x) {
+        halo_num += cells_by_y * cells_by_z;
+        back = true;
+    }
+
+    if (proc_x < param_px-1) {
+        halo_num += cells_by_y * cells_by_z;
+        front = true;
+    }
+
+    if (proc_y < param_py-1) {
+        halo_num += cells_by_x * cells_by_z;
+        right = true;
+    }
+
+    if (proc_z < param_pz-1) {
+        halo_num += cells_by_x * cells_by_y;
+        up = true;
+    }
 
     const int extended_num = internal_num + halo_num;
+    // printf("extended for process #%d is %d\n", rank, extended_num);
     part = new int[extended_num];
     l2g  = new int[extended_num];
+
+    // `part` and `l2g` filling activity
+    fill_internal_gids(l2g, i_range, j_range, k_range, param_nx, param_ny);
+    int idx = 0;
+    for (idx; idx < internal_num; ++idx) {
+        part[idx] = rank;
+    }
+
+    if (down) {
+        int neigh_rank = rank - param_px*param_py;
+        for (int i = 0; i < cells_by_x * cells_by_y; ++i) {
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[i] - param_nx*param_ny;
+        }
+        idx += cells_by_x * cells_by_y;
+    }
+
+    if (left) {
+        int neigh_rank = rank - param_px;
+        for (int i = 0; i < cells_by_x * cells_by_z; ++i) {
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[cells_by_x*cells_by_y*(i/cells_by_x) + 
+                i%cells_by_x] - param_nx;
+        }
+        idx += cells_by_x * cells_by_z;
+    }
+
+    if (back) {
+        int neigh_rank = rank - 1;
+        for (int i = 0; i < cells_by_y * cells_by_z; ++i) {
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[i*cells_by_x] - 1;
+        }
+        idx += cells_by_y * cells_by_z;
+    }
+
+    if (front) {
+        int neigh_rank = rank + 1;
+        for (int i = 0; i < cells_by_y * cells_by_z; ++i) {
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[i*cells_by_x] + cells_by_x;
+        }
+        idx += cells_by_y * cells_by_z;
+    }
+
+    if (right) {
+        int neigh_rank = rank + param_px;
+        for (int i = 0; i < cells_by_x * cells_by_z; ++i) {
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[cells_by_x*cells_by_y*(i/cells_by_x) + 
+                i%cells_by_x] + cells_by_y*param_nx;
+        }
+        idx += cells_by_x * cells_by_z;
+    }
+
+    if (up) {
+        int neigh_rank = rank + param_px*param_py;
+        for (int i = 0; i < cells_by_x * cells_by_y; ++i) {
+            part[idx+i] = neigh_rank;
+            l2g[idx+i]  = l2g[i] + cells_by_z*(param_nx*param_ny);
+        }
+        idx += cells_by_x * cells_by_y;
+    }
+
+    // `matrix` will be filled only in the MASTER, for others it's just a stub
+    ellpack_matrix matrix;
+    // initial matrix retrieving (via generating or reading from file)
+    if (rank == MASTER_PROCESS) {
+        std::vector<double> b;
+        std::size_t N;
+
+        // generate data if input files haven't been specified correctly
+        if (param_matrix_filename.empty() or param_vector_filename.empty()) {
+
+            N = param_nx * param_ny * param_nz;
+            matrix = so::generate_diag_dominant_matrix(param_nx, 
+                param_ny, param_nz);
+            b.reserve(N);
+            for (std::size_t i = 0; i < N; ++i) {
+                b.push_back(std::cos(i));
+            }
+
+        } else {
+
+            matrix = so::read_ellpack_matrix(param_matrix_filename);
+            b = so::read_vector(param_vector_filename);
+            N = b.size();
+        }
+    }
+
+    printf("process #%d part: %s\n", rank, 
+        intarray2string(part, extended_num).c_str());
+    printf("process #%d l2g: %s\n", rank, 
+        intarray2string(l2g, extended_num).c_str());
+
+    ellpack_matrix local_data;
+    // seven elements corresponds to max number of neighbors for cell 
+    // (including itself)in 3-d space 
+    const char SEVEN = 7;
+    local_data.idxs = std::vector< std::vector<int> >(internal_num, 
+        std::vector<int>(SEVEN));
+    local_data.data = std::vector< std::vector<double> >(internal_num, 
+        std::vector<double>(SEVEN));
+
+    int *idxs_storage = new int[internal_num*SEVEN];
+    double *data_storage = new double[internal_num*SEVEN];
+    MPI_Request matrix_req, idxs_req, data_req;
+    MPI_Isend(l2g, internal_num, MPI_INT, 0, rank, MPI_COMM_WORLD, &matrix_req);
+    MPI_Irecv(idxs_storage, internal_num*SEVEN, MPI_INT, MASTER_PROCESS, 
+        IDXS_TAG, MPI_COMM_WORLD, &idxs_req);
+    MPI_Irecv(data_storage, internal_num*SEVEN, MPI_DOUBLE, MASTER_PROCESS, 
+        DATA_TAG, MPI_COMM_WORLD, &data_req);
+
+    if (rank == MASTER_PROCESS) {
+        for (int i = 0; i < nproc; ++i) {
+
+            MPI_Status stat;
+            MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &stat);
+            int process = stat.MPI_SOURCE;
+            int buf_size;
+            MPI_Get_count(&stat, MPI_INT, &buf_size);
+            int *claimed_rows = new int[buf_size];
+            MPI_Recv(claimed_rows, buf_size, MPI_INT, process, process, 
+                MPI_COMM_WORLD, &stat);
+            std::vector<int> idxs_to_send = 
+                so::unroll_matrix_rows(matrix.idxs, claimed_rows, buf_size);
+            std::vector<double> data_to_send = 
+                so::unroll_matrix_rows(matrix.data, claimed_rows, buf_size);
+
+            MPI_Send(&idxs_to_send[0], buf_size, MPI_INT, process, 
+                IDXS_TAG, MPI_COMM_WORLD);
+            MPI_Send(&data_to_send[0], buf_size, MPI_DOUBLE, process, 
+                DATA_TAG, MPI_COMM_WORLD);
+            delete[] claimed_rows;
+        }
+
+        // cleaning out all global matrix data
+        const int row_number = matrix.idxs.size();
+        for (int i = 0; i < row_number; ++i) {
+            matrix.idxs[i].clear();
+            matrix.data[i].clear();
+        }
+
+        matrix.idxs.clear();
+        matrix.data.clear();
+    }
+
+    MPI_Status stat;
+    MPI_Wait(&idxs_req, &stat);
+    MPI_Wait(&data_req, &stat);
+    for (int i = 0; i < internal_num; ++i) {
+        for (int j = 0; j < SEVEN; ++j) {
+            local_data.idxs[i][j] = idxs_storage[i*SEVEN + j];
+            local_data.data[i][j] = data_storage[i*SEVEN + j];
+        }
+    }
+
+    delete[] idxs_storage;
+    delete[] data_storage;
 
     delete[] part;
     delete[] l2g;
