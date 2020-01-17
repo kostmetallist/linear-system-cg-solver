@@ -328,83 +328,6 @@ int main(int argc, char *argv[]) {
         shared_params[4] = param_ny;
         shared_params[5] = param_nz;
         shared_params[6] = param_nt;
-
-        // time measurements storage value
-        // double t;
-
-        // basic operations testing
-        // executing three times each for minimizing randomness
-        // if (param_qa) {
-        //     std::vector<double> x(N), y(N);
-        //     for (std::size_t i = 0; i < N; ++i) {
-        //         x[i] = std::cos(i*i);
-        //         y[i] = std::sin(i*i);
-        //     }
-
-        //     t = omp_get_wtime();
-        //     double dot_result = so::dot(x, y);
-        //            dot_result = so::dot(x, y);
-        //            dot_result = so::dot(x, y);
-        //     t = omp_get_wtime() - t;
-        //     std::cout << "Dot operation has been done in " << (t/3.0)*1000 << 
-        //         " ms" << std::endl;
-        //     double dot_test = 0;
-
-        //     for (std::size_t i = 0; i < N; ++i) {
-        //         dot_test += x[i] * y[i];
-        //     }
-
-        //     if (std::abs(dot_result - dot_test) > EPS) {
-        //         std::cerr << "--qa: dot assertion error: result (" << 
-        //             dot_result << ") is much different from expected (" << 
-        //             dot_test << ") value" << std::endl;
-        //     }
-
-        //     t = omp_get_wtime();
-        //     std::vector<double> axpby_result = so::axpby(x, 1.0, y, -1.0);
-        //                         axpby_result = so::axpby(x, 1.0, y, -1.0);
-        //                         axpby_result = so::axpby(x, 1.0, y, -1.0);
-        //     t = omp_get_wtime() - t;
-        //     std::cout << "Axpby operation has been done in " << (t/3.0)*1000 << 
-        //         " ms" << std::endl;
-        //     std::vector<double> axpby_test(N);
-        //     for (std::size_t i = 0; i < N; ++i) {
-        //         axpby_test[i] = x[i] - y[i];
-        //     }
-
-        //     for (std::size_t i = 0; i < N; ++i) {
-        //         if (std::abs(axpby_result[i] - axpby_test[i]) > EPS) {
-        //             std::cerr << "--qa: axpby assertion error: result in " << 
-        //                 i << "th position (" << axpby_result[i] << 
-        //                 ") is much different from expected (" << 
-        //                 axpby_test[i] << ")" << std::endl;
-        //             break;
-        //         }
-        //     }
-
-        //     t = omp_get_wtime();
-        //     std::vector<double> spmv_result = so::spmv(em, x);
-        //                         spmv_result = so::spmv(em, x);
-        //                         spmv_result = so::spmv(em, x);
-        //     t = omp_get_wtime() - t;
-        //     std::cout << "Spmv operation has been done in " << (t/3.0)*1000 << 
-        //         " ms" << std::endl;
-        //     const std::vector<double> spmv_test = so::spmv_consecutive(em, x);
-        //     const double norm_result = 
-        //         std::sqrt(so::dot(spmv_result, spmv_result));
-        //     const double norm_test = std::sqrt(so::dot(spmv_test, spmv_test));
-        //     if (std::abs(norm_result - norm_test) > EPS) {
-        //         std::cerr << "--qa: spmv assertion error: result norm (" << 
-        //             norm_result << ") is much different from expected norm (" << 
-        //             norm_test << ") value" << std::endl;
-        //     }
-        // }
-
-        // t = omp_get_wtime();
-        // std::vector<double> solution = 
-        //     so::cg_solve(em, b, param_tol, param_maxit);
-        // t = omp_get_wtime() - t;
-        // std::cout << "Solver is finished in " << t*1000 << " ms" << std::endl;
     }
 
     // receiving entered values from MASTER
@@ -560,6 +483,92 @@ int main(int argc, char *argv[]) {
             matrix = so::read_ellpack_matrix(param_matrix_filename);
             b = so::read_vector(param_vector_filename);
             N = b.size();
+        }
+
+        // non distributed setup => start solver as one process instance
+        if (nproc == 1) {
+
+            // time measurements storage value
+            double t;
+
+            // basic operations testing
+            // executing three times each for minimizing randomness
+            if (param_qa) {
+                std::vector<double> x(N), y(N);
+                for (std::size_t i = 0; i < N; ++i) {
+                    x[i] = std::cos(i*i);
+                    y[i] = std::sin(i*i);
+                }
+
+                t = omp_get_wtime();
+                double dot_result = so::dot(x, y);
+                       dot_result = so::dot(x, y);
+                       dot_result = so::dot(x, y);
+                t = omp_get_wtime() - t;
+                std::cout << "Dot operation has been done in " << 
+                    (t/3.0)*1000 << " ms" << std::endl;
+                double dot_test = 0;
+
+                for (std::size_t i = 0; i < N; ++i) {
+                    dot_test += x[i] * y[i];
+                }
+
+                if (std::abs(dot_result - dot_test) > EPS) {
+                    std::cerr << "--qa: dot assertion error: result (" << 
+                        dot_result << ") is much different from expected (" << 
+                        dot_test << ") value" << std::endl;
+                }
+
+                t = omp_get_wtime();
+                std::vector<double> axpby_result = so::axpby(x, 1.0, y, -1.0);
+                                    axpby_result = so::axpby(x, 1.0, y, -1.0);
+                                    axpby_result = so::axpby(x, 1.0, y, -1.0);
+                t = omp_get_wtime() - t;
+                std::cout << "Axpby operation has been done in " << 
+                    (t/3.0)*1000 << " ms" << std::endl;
+                std::vector<double> axpby_test(N);
+                for (std::size_t i = 0; i < N; ++i) {
+                    axpby_test[i] = x[i] - y[i];
+                }
+
+                for (std::size_t i = 0; i < N; ++i) {
+                    if (std::abs(axpby_result[i] - axpby_test[i]) > EPS) {
+                        std::cerr << "--qa: axpby assertion error: result " <<
+                            "in " << i << "th position (" << axpby_result[i] << 
+                            ") is much different from expected (" << 
+                            axpby_test[i] << ")" << std::endl;
+                        break;
+                    }
+                }
+
+                t = omp_get_wtime();
+                std::vector<double> spmv_result = so::spmv(matrix, x);
+                                    spmv_result = so::spmv(matrix, x);
+                                    spmv_result = so::spmv(matrix, x);
+                t = omp_get_wtime() - t;
+                std::cout << "Spmv operation has been done in " << 
+                    (t/3.0)*1000 << " ms" << std::endl;
+                const std::vector<double> spmv_test = 
+                    so::spmv_consecutive(matrix, x);
+                const double norm_result = 
+                    std::sqrt(so::dot(spmv_result, spmv_result));
+                const double norm_test = 
+                    std::sqrt(so::dot(spmv_test, spmv_test));
+                if (std::abs(norm_result - norm_test) > EPS) {
+                    std::cerr << "--qa: spmv assertion error: result norm (" << 
+                        norm_result << ") is much different from expected " << 
+                        "norm (" << norm_test << ") value" << std::endl;
+                }
+            }
+
+            t = omp_get_wtime();
+            std::vector<double> solution = 
+                so::cg_solve(matrix, b, param_tol, param_maxit);
+            t = omp_get_wtime() - t;
+            std::cout << "Solver is finished in " << t*1000 << 
+                " ms" << std::endl;
+            MPI_Finalize();
+            exit(0);
         }
     }
 
